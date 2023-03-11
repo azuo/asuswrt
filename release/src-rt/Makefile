@@ -61,7 +61,7 @@ else
 include $(ASUSWRTVERSIONCONFDIR)/version.conf
 endif
 
-export BRANCH := $(shell git branch)
+#export BRANCH := $(shell git branch)
 
 ifeq ($(BRANCH),) 
 include ./router/extendno.conf
@@ -2571,7 +2571,7 @@ fi; \
 		echo "# CONFIG_MTD_NAND_ECC is not set" >>$(1); \
 		sed -i "/CONFIG_MTD_NAND/d" $(1); \
 		echo "# CONFIG_MTD_NAND is not set" >>$(1); \
-		sed -i "/CONFIG_MTD_NAND_IDS/d" $(1) \
+		sed -i "/CONFIG_MTD_NAND_IDS/d" $(1); \
 		echo "# CONFIG_MTD_NAND_IDS is not set" >>$(1); \
 		sed -i "/CONFIG_MTD_BCMCONF_PARTS/d" $(1); \
 		echo "# CONFIG_MTD_BCMCONF_PARTS is not set" >>$(1); \
