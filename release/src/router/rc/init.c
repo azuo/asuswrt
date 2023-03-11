@@ -784,7 +784,9 @@ restore_defaults_module(char *prefix)
 
 int restore_defaults_g = 0;
 
-#ifdef RTCONFIG_USB
+#ifndef RTCONFIG_USB
+void stop_usb_program() {}
+#else
 // increase this number each time need to reset usb related setting
 // acc_num/acc_username/acc_password to acc_num/acc_list
 #define USBCTRLVER 1
@@ -4785,19 +4787,19 @@ int init_nvram(void)
 		nvram_set("wl_ifnames", "eth1 eth2");
 		nvram_set("wl0_vifnames", "wl0.1 wl0.2 wl0.3");
 		nvram_set("wl1_vifnames", "wl1.1 wl1.2 wl1.3");
-		nvram_set_int("btn_rst_gpio", 5|GPIO_ACTIVE_LOW);
+		nvram_set_int("btn_rst_gpio", 7|GPIO_ACTIVE_LOW);
 		nvram_set_int("btn_wps_gpio", 9|GPIO_ACTIVE_LOW);
-		nvram_set_int("led_pwr_gpio", 10|GPIO_ACTIVE_LOW);
-		nvram_set_int("led_wps_gpio", 10|GPIO_ACTIVE_LOW);
+		nvram_set_int("led_pwr_gpio", 15);
+		nvram_set_int("led_wps_gpio", 10);
 //		nvram_set_int("led_5g_gpio", 11);	// active high
-		nvram_set_int("led_usb_gpio", 15|GPIO_ACTIVE_LOW);
+		nvram_set_int("led_usb_gpio", 1);
 
 		nvram_unset("xhci_ports");
 		nvram_set("ehci_ports", "1-1");
 		nvram_set("ohci_ports", "2-1");
 //		if (!nvram_get("ct_max"))
 			nvram_set("ct_max", "250000");
-		add_rc_support("mssid 2.4G 5G usbX1");
+		add_rc_support("mssid 2.4G 5G");
 		add_rc_support("switchctrl"); // broadcom: for jumbo frame only
 		add_rc_support("manual_stb");
 		add_rc_support("WIFI_LOGO");
