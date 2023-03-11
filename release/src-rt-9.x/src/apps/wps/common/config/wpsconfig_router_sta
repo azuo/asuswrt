@@ -1,0 +1,24 @@
+# Broadcom WPS Configuration file for Linux router STA
+#
+# $ Copyright Broadcom Corporation $
+#
+#
+# <<Broadcom-WL-IPTag/Proprietary:>>
+
+# default wps config file
+#
+# $Id: $
+
+
+WCN_NET = 0
+WPS_LINUX = 1
+EXTERNAL_OPENSSL = 0
+WPS_AP = 0
+WPS_STA = 1
+WPS_ROUTER = 1
+WPS_WFI = 1
+WPS_UPNP_DEVICE = 0
+WPS_ENR = 1
+WPS_REG = 1
+WPS_CRYPT = 0
+WPS_NFC_DEVICE ?= 0
