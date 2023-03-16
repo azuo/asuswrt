@@ -785,7 +785,7 @@ restore_defaults_module(char *prefix)
 int restore_defaults_g = 0;
 
 #ifndef RTCONFIG_USB
-void stop_usb_program() {}
+void stop_usb_program(int mode) {}
 #else
 // increase this number each time need to reset usb related setting
 // acc_num/acc_username/acc_password to acc_num/acc_list
