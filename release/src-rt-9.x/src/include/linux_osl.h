@@ -1,7 +1,7 @@
 /*
  * Linux OS Independent Layer
  *
- * Copyright (C) 2015, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2016, Broadcom. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: linux_osl.h 499919 2014-09-01 23:30:59Z $
+ * $Id: linux_osl.h 661826 2016-09-27 12:34:53Z $
  */
 
 #ifndef _linux_osl_h_
@@ -201,6 +201,14 @@ extern void osl_dma_unmap(osl_t *osh, uint pa, uint size, int direction);
 
 /* API for DMA addressing capability */
 #define OSL_DMADDRWIDTH(osh, addrwidth) ({BCM_REFERENCE(osh); BCM_REFERENCE(addrwidth);})
+
+#ifdef BCA_HNDROUTER
+#define ACP_WAR_ENAB()	0	/* Do not need this WAR for 47189 b1 */
+#define ACP_WIN_LIMIT	0xff	/* Added to passthrough the compilation */
+#endif
+/* API for CPU relax */
+extern void osl_cpu_relax(void);
+#define OSL_CPU_RELAX() osl_cpu_relax()
 
 #if defined(__mips__) || defined(__ARM_ARCH_7A__)
 	extern void osl_cache_flush(void *va, uint size);
@@ -476,9 +484,11 @@ extern void osl_writel(osl_t *osh, volatile uint32 *r, uint32 v);
 #ifdef BCMDBG_CTRACE
 #define	PKTGET(osh, len, send)		osl_pktget((osh), (len), __LINE__, __FILE__)
 #define	PKTDUP(osh, skb)		osl_pktdup((osh), (skb), __LINE__, __FILE__)
+#define	PKTDUP_CPY(osh, skb)		osl_pktdup_cpy((osh), (skb), __LINE__, __FILE__)
 #else
 #define	PKTGET(osh, len, send)		osl_pktget((osh), (len))
 #define	PKTDUP(osh, skb)		osl_pktdup((osh), (skb))
+#define	PKTDUP_CPY(osh, skb)		osl_pktdup_cpy((osh), (skb))
 #endif /* BCMDBG_CTRACE */
 #define PKTLIST_DUMP(osh, buf)		BCM_REFERENCE(osh)
 #define PKTDBG_TRACE(osh, pkt, bit)	BCM_REFERENCE(osh)
@@ -1045,12 +1055,14 @@ extern void *osl_pktget(osl_t *osh, uint len, int line, char *file);
 extern void *osl_pkt_frmnative(osl_t *osh, void *skb, int line, char *file);
 extern int osl_pkt_is_frmnative(osl_t *osh, struct sk_buff *pkt);
 extern void *osl_pktdup(osl_t *osh, void *skb, int line, char *file);
+extern void *osl_pktdup_cpy(osl_t *osh, void *skb, int line, char *file);
 struct bcmstrbuf;
 extern void osl_ctrace_dump(osl_t *osh, struct bcmstrbuf *b);
 #else
 extern void *osl_pkt_frmnative(osl_t *osh, void *skb);
 extern void *osl_pktget(osl_t *osh, uint len);
 extern void *osl_pktdup(osl_t *osh, void *skb);
+extern void *osl_pktdup_cpy(osl_t *osh, void *skb);
 #endif /* BCMDBG_CTRACE */
 extern struct sk_buff *osl_pkt_tonative(osl_t *osh, void *pkt);
 #ifdef BCMDBG_CTRACE
@@ -1283,10 +1295,12 @@ extern void osl_reg_unmap(void *va);
 #ifdef BCMDBG_CTRACE
 #define	PKTGET(osh, len, send)		osl_pktget((osh), (len), __LINE__, __FILE__)
 #define	PKTDUP(osh, skb)		osl_pktdup((osh), (skb), __LINE__, __FILE__)
+#define	PKTDUP_CPY(osh, skb)		osl_pktdup_cpy((osh), (skb), __LINE__, __FILE__)
 #define PKTFRMNATIVE(osh, skb)		osl_pkt_frmnative((osh), (skb), __LINE__, __FILE__)
 #else
 #define	PKTGET(osh, len, send)		osl_pktget((osh), (len))
 #define	PKTDUP(osh, skb)		osl_pktdup((osh), (skb))
+#define	PKTDUP_CPY(osh, skb)		osl_pktdup_cpy((osh), (skb))
 #define PKTFRMNATIVE(osh, skb)		osl_pkt_frmnative((osh), (skb))
 #endif /* BCMDBG_CTRACE */
 #define PKTLIST_DUMP(osh, buf)		({BCM_REFERENCE(osh); BCM_REFERENCE(buf);})
@@ -1318,6 +1332,7 @@ extern void osl_reg_unmap(void *va);
 
 extern void *osl_pktget(osl_t *osh, uint len);
 extern void *osl_pktdup(osl_t *osh, void *skb);
+extern void *osl_pktdup_cpy(osl_t *osh, void *skb);
 extern void *osl_pkt_frmnative(osl_t *osh, void *skb);
 extern void osl_pktfree(osl_t *osh, void *skb, bool send);
 extern uchar *osl_pktdata(osl_t *osh, void *skb);

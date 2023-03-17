@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2016, Broadcom. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -13,7 +13,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: hndctf.h 494882 2014-08-04 21:30:19Z $
+ * $Id: hndctf.h 594480 2015-10-22 03:14:33Z $
  */
 
 #ifndef _HNDCTF_H_
@@ -117,8 +117,7 @@ do { \
 } while (0)
 
 #ifdef CTF_IPV6
-#define FRAG_IPV6_UDP_H	(NULL + 1)
-#define FRAG_IPV6_UDP_DUMMY_PORT	0
+#define FRAG_IPV6_UDP_PROTO	0xF6
 #endif
 
 #define NIPQUAD(addr) \
@@ -188,6 +187,7 @@ typedef int (*ctf_fa_cb_t)(void *dev, ctf_ipc_t *ipc, bool v6, int cmd);
 typedef int32 (*ctf_fa_register_t)(ctf_t *ci, ctf_fa_cb_t facb, void *fa);
 typedef void (*ctf_live_t)(ctf_t *ci, ctf_ipc_t *ipc, bool v6);
 #endif /* BCMFA */
+
 #ifdef CTF_PPTP
 typedef int32 (*ctf_pptp_cache_t)(ctf_t *ci, uint32 lock_fgoff, uint32 hoplmt);
 #endif /* CTF_PPTP */
@@ -272,6 +272,7 @@ struct ctf_conn_tuple {
 	uint32	sip[IPADDR_U32_SZ], dip[IPADDR_U32_SZ];
 	uint16	sp, dp;
 	uint8	proto;
+	uint16	sid;
 };
 
 typedef struct ctf_nat {

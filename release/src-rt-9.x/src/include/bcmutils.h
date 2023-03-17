@@ -1,7 +1,7 @@
 /*
  * Misc useful os-independent macros and functions.
  *
- * Copyright (C) 2015, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2016, Broadcom. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -77,6 +77,10 @@ struct bcmstrbuf {
 	unsigned int origsize;	/* unmodified orignal buffer size in bytes */
 };
 
+/* forward definition of ether_addr structure used by some function prototypes */
+struct ether_addr;
+extern int bcm_ether_atoe(const char *p, struct ether_addr *ea);
+
 /* ** driver-only section ** */
 #ifdef BCMDRIVER
 #ifdef EFI
@@ -105,10 +109,6 @@ struct spktq;
 		countdown -= SPINWAIT_POLL_PERIOD; \
 	} \
 }
-
-/* forward definition of ether_addr structure used by some function prototypes */
-
-struct ether_addr;
 
 extern int ether_isbcast(const void *ea);
 extern int ether_isnulladdr(const void *ea);
@@ -232,7 +232,6 @@ int bcmstrnicmp(const char* s1, const char* s2, int cnt);
 
 /* ethernet address */
 extern char *bcm_ether_ntoa(const struct ether_addr *ea, char *buf);
-extern int bcm_ether_atoe(const char *p, struct ether_addr *ea);
 
 /* ip address */
 struct ipv4_addr;
@@ -760,11 +759,7 @@ extern int bcm_format_field(const bcm_bit_desc_ex_t *bd, uint32 field, char* buf
 /* print out which bits in flags are set */
 extern int bcm_format_flags(const bcm_bit_desc_t *bd, uint32 flags, char* buf, int len);
 
-#if defined(BCMDBG) || defined(DHD_DEBUG) || defined(BCMDBG_ERR) || \
-	defined(WLMSG_PRHDRS) || defined(WLMSG_PRPKT) || defined(WLMSG_ASSOC) || \
-	defined(WLMEDIA_PEAKRATE)
 extern int bcm_format_hex(char *str, const void *bytes, int len);
-#endif
 
 #ifdef BCMDBG
 extern void deadbeef(void *p, uint len);

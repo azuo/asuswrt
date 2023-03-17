@@ -573,6 +573,10 @@ ifneq ($(CONFIG_BCM_GMAC3),)
 KBUILD_CFLAGS += -DBCM_GMAC3
 endif
 
+ifneq ($(CONFIG_BCM_DHDHDR),)
+KBUILD_CFLAGS += -DBCM_DHDHDR
+endif
+
 ifneq ($(CONFIG_BCM_FA),)
 KBUILD_CFLAGS += -DBCMFA
 endif
@@ -661,6 +665,10 @@ endif
 # We trigger additional mismatches with less inlining
 ifdef CONFIG_DEBUG_SECTION_MISMATCH
 KBUILD_CFLAGS += $(call cc-option, -fno-inline-functions-called-once)
+endif
+
+ifneq ($(CONFIG_BMOCA),)
+KBUILD_CFLAGS += -DBCM_BMOCA
 endif
 
 # arch Makefile may override CC so keep this after arch Makefile is included

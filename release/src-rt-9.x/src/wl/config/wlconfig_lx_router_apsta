@@ -1,6 +1,6 @@
 # Broadcom 802.11abg Networking Device Driver Configuration file
 #
-# Copyright (C) 2015, Broadcom Corporation. All Rights Reserved.
+# Copyright (C) 2016, Broadcom. All Rights Reserved.
 # 
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -66,11 +66,16 @@ WLINTFERSTAT=1
 PSPRETEND=1
 WL_STA_MONITOR=1
 WL_MONITOR=1
+WL_RADIOTAP=1
 SCB_BS_DATA=1
 WL_CHANSPEC_TXPWR_MAX=1
 WLRSDB=1
 WL_RSDB_DISABLED=1
 WL_PHYTXERR_DUMP=1
+WL_SPLIT_ASSOC=1
 
 # Temporary WAR for 53573 Pcie interrupts issue - JIRA:HW53573-213 */
 WL_POLL_INTERRUPTS=1
+CLIENT_CSA=1
+DISABLE_AMSDUTX_FOR_VI=1
+FRAMEBURST_RTSCTS_PER_AMPDU=1

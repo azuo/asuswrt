@@ -2,15 +2,15 @@
  * Chip-specific hardware definitions for
  * Broadcom 802.11abg Networking Device Driver
  *
- * Copyright (C) 2015, Broadcom Corporation
+ * Broadcom Proprietary and Confidential. Copyright (C) 2016,
  * All Rights Reserved.
  * 
- * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
+ * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom;
  * the contents of this file may not be disclosed to third parties, copied
  * or duplicated in any form, in whole or in part, without the prior
- * written permission of Broadcom Corporation.
+ * written permission of Broadcom.
  *
- * $Id: d11.h 563719 2015-06-15 11:55:11Z $
+ * $Id: d11.h 667216 2016-10-26 09:59:12Z $
  */
 
 #ifndef	_D11_H
@@ -1814,20 +1814,22 @@ enum  {
 #define AMT_IDX_MCAST_ADDR2	58	/* MCAST address for Reliable Mcast feature */
 #define AMT_IDX_MCAST_ADDR3	57	/* MCAST address for Reliable Mcast feature */
 
-#ifdef WL_STA_MONITOR
-#define AMT_MAX_STA_MONITOR     1	/* Max STA(s) to monitor */
-#define AMT_MAXIDX_STA_MONITOR  60	/* AMT entry for STA to monitor */
-#define AMT_MAXIDX_P2P_USE	\
-	(AMT_MAXIDX_STA_MONITOR - AMT_MAX_STA_MONITOR)	/* Max P2P entry to use */
-#else
-#define AMT_MAX_STA_MONITOR     0
-#define AMT_MAXIDX_STA_MONITOR  0
 #define AMT_MAXIDX_P2P_USE	60	/* Max P2P entry to use */
-#endif /* WL_STA_MONITOR */
+
+#ifdef ACKSUPR_MAC_FILTER
+#define AMT_MAX_MACLIST_NUM 60 /* assume P2P not used */
+#endif /* ACKSUPR_MAC_FILTER */
 
 #define AMT_MAX_TXBF_ENTRIES	7	/* Max tx beamforming entry */
 /* PSTA AWARE AP: Max PSTA Tx beamforming entry */
 #define AMT_MAX_TXBF_PSTA_ENTRIES	20
+
+#ifdef ACKSUPR_MAC_FILTER
+/* M_AMT_INFO SHM bit field definition */
+#define AMTINFO_BMP_IBSS	(1 << 0)	/* IBSS Station */
+#define AMTINFO_BMP_WLIST	(1 << 1)	/* WHITELIST enable */
+#define AMTINFO_BMP_BSSID	(1 << 2)	/* BSSID-only */
+#endif /* ACKSUPR_MAC_FILTER */
 
 /* PSM Block */
 
@@ -1883,6 +1885,8 @@ enum  {
 #define	SKL_INDEX_SHIFT		4
 #define	SKL_GRP_ALGO_MASK	0x1c00
 #define	SKL_GRP_ALGO_SHIFT	10
+
+#define	SKL_STAMON_NBIT		0x8000 /* STA monitor bit */
 
 /* additional bits defined for IBSS group key support */
 #define	SKL_IBSS_INDEX_MASK	0x01F0
@@ -2456,7 +2460,7 @@ BWL_PRE_PACKED_STRUCT struct shm_acparams {
 #define MHF3_PAPD_OFF_OFDM	0x8000		/* Disable PAPD comp for OFDM frames */
 
 /* Flags in M_HOST_FLAGS4 */
-#define MHF4_CISCOTKIP_WAR	0x0001		/* Change WME timings under certain conditions */
+#define MHF4_RTS_INFB		0x0001		/* Enable RTS in frameburst */
 #define	MHF4_RCMTA_BSSID_EN	0x0002		/* BTAMP: multiSta BSSIDs matching in RCMTA area */
 #define	MHF4_BCN_ROT_RR		0x0004		/* MBSSID: beacon rotate in round-robin fashion */
 #define	MHF4_OPT_SLEEP		0x0008		/* enable opportunistic sleep */
@@ -2468,7 +2472,10 @@ BWL_PRE_PACKED_STRUCT struct shm_acparams {
 #define MHF4_WMAC_ACKTMOUT	0x0200		/* reserved for WMAC testing */
 #define MHF4_IBSS_SEC		0x0800		/* IBSS WPA2-PSK operating mode */
 #define MHF4_EXTPA_ENABLE	0x4000		/* for 4313A0 FEM boards */
-#define MHF4_MAC_CORE1_IOCTRL_OPT	0x8000		/* for 4349B0. JIRA: CRWLDOT11M-1582 */
+#ifdef ACKSUPR_MAC_FILTER
+#define MHF4_EN_ACKSUPR_BITMAP 0x4000 /* for pre-11ac acksupr enable */
+#endif /* ACKSUPR_MAC_FILTER */
+#define MHF4_MAC_CORE1_IOCTRL_OPT	0x8000
 
 /* Flags in M_HOST_FLAGS5 */
 #define MHF5_4313_BTCX_GPIOCTRL	0x0001		/* Enable gpio for bt/wlan sel for 4313 */
@@ -2949,6 +2956,7 @@ typedef enum
 #define M_TXS_SIZE			10
 #define M_TXS_MAX_ENTRIES	(M_TXS_FIFO_BLK_SIZE/M_TXS_SIZE)
 
+#define ADDR_STAMON_NBIT	(1 << 10) /* STA monitor bit in AMT_INFO_BLK entity */
 
 #ifdef WLP2P_UCODE
 /* WiFi P2P SHM location */
@@ -4220,9 +4228,6 @@ extern uint16 aes_xtime9dbe[512];
 /* Supported phymodes / macmodes / opmodes */
 #define SINGLE_MAC_MODE				0x0 /* only single mac is enabled */
 #define DUAL_MAC_MODE				0x1 /* enables dual mac */
-/* (JIRA: CRDOT11ACPHY-652) Following two #defines support
- * exclusive reg access to core 0/1 in MIMO mode
- */
 #define SUPPORT_EXCLUSIVE_REG_ACCESS_CORE0	0x2
 #define SUPPORT_EXCLUSIVE_REG_ACCESS_CORE1	0x4 /* not functional in 4349A0 */
 #define SUPPORT_CHANNEL_BONDING			0x8 /* enables channel bonding,

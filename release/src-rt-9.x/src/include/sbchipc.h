@@ -5,9 +5,9 @@
  * JTAG, 0/1/2 UARTs, clock frequency control, a watchdog interrupt timer,
  * GPIO interface, extbus, and support for serial and parallel flashes.
  *
- * $Id: sbchipc.h 555195 2015-05-07 23:27:32Z $
+ * $Id: sbchipc.h 614895 2016-01-25 07:49:22Z $
  *
- * Copyright (C) 2015, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2016, Broadcom. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -1238,6 +1238,8 @@ typedef volatile struct {
 
 #define SFLASH_MXIC_RDID	0x0390		/* Read Manufacture ID */
 #define SFLASH_MXIC_MFID	0xc2		/* MXIC Manufacture ID */
+
+#define SFLASH_MICRON_RDID	0x0a9f		/* Read Manufacture ID */
 
 /* Status register bits for ST flashes */
 #define SFLASH_ST_WIP		0x01		/* Write In Progress */

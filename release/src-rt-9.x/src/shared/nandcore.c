@@ -1,7 +1,7 @@
 /*
  * Broadcom NAND core interface
  *
- * Copyright (C) 2015, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2016, Broadcom. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -609,8 +609,13 @@ nandcore_init(si_t *sih)
 
 	/* 53573/47189 series */
 	if (sih->ccrev == 54) {
-		if (!nandcore_nand_present(sih))
+		if (!nandcore_nand_present(sih)) {
+#ifndef _CFE_
+			/* Because of no NAND flash, disable NAND core for power saving */
+			si_core_disable(sih, 0);
+#endif /* _CFE_ */
 			return NULL;
+		}
 		if (bootdev == -1)
 			bootdev = soc_boot_dev((void *)sih);
 		if (bootdev != SOC_BOOTDEV_NANDFLASH) {

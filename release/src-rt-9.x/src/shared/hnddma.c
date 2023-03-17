@@ -2,7 +2,7 @@
  * Generic Broadcom Home Networking Division (HND) DMA module.
  * This supports the following chips: BCM42xx, 44xx, 47xx .
  *
- * Copyright (C) 2015, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2016, Broadcom. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -109,7 +109,7 @@ static uint dma_msg_level =
 #define dma64_txd64(di, ix) (void *)((uint)(&((dma64dd_t *)((di)->txd64))[ix]))
 #endif /* BULK_DESCR_FLUSH */
 
-#define D11RX_WAR_MAX_BUF_SIZE 492 /* Refer JIRA:CRWLDOT11M-1776 */
+#define D11RX_WAR_MAX_BUF_SIZE 492
 #define MAXRXBUFSZ 2048
 /** dma engine software state */
 typedef struct dma_info {
@@ -219,7 +219,6 @@ typedef struct dma_info {
 	 * an aatachfn, because there are cases where this gets called run time for some compiles
 	*/
 	bool		dmapad_required;
-	/* JIRA:CRWLDOT11M-1776; Rx DMA buffer cannot exceed 492 bytes */
 	bool		d11rx_war;
 	uint8		rxwaitforcomplt;
 } dma_info_t;
@@ -1676,7 +1675,6 @@ _dma_rxfill(dma_info_t *di)
 		/* Do a cached write instead of uncached write since DMA_MAP
 		 * will flush the cache.
 		*/
-		/* Keep it 32 bit-wide to prevent asserts: RB:17293 JIRA:SWWLAN-36682 */
 		*(uint32 *)(PKTDATA(di->osh, p)) = 0;
 
 #if defined(linux) && (defined(BCM47XX_CA9) || defined(__mips__)) && defined(BCM_GMAC3)

@@ -1129,5 +1129,10 @@ config RAMOOPS
 	  This enables panic and oops messages to be logged to a circular
 	  buffer in RAM where it can be read back at some later point.
 
+config BMOCA
+        tristate "BMOCA Driver"
+        default n
+        help
+            BMOCA Driver for BCM6802
 endmenu
 

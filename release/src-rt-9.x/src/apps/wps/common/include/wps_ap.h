@@ -1,18 +1,18 @@
 /*
  * WPS AP
  *
- * Copyright (C) 2015, Broadcom Corporation
+ * Broadcom Proprietary and Confidential. Copyright (C) 2016,
  * All Rights Reserved.
  * 
- * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
+ * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom;
  * the contents of this file may not be disclosed to third parties, copied
  * or duplicated in any form, in whole or in part, without the prior
- * written permission of Broadcom Corporation.
+ * written permission of Broadcom.
  *
  *
  * <<Broadcom-WL-IPTag/Proprietary:>>
  *
- * $Id: wps_ap.h 525052 2015-01-08 20:18:35Z $
+ * $Id: wps_ap.h 655917 2016-08-24 07:50:36Z $
  */
 
 #ifndef __WPS_AP_H__
@@ -55,6 +55,7 @@ typedef struct {
 	uint32 authorizedMacs_len;
 	uint8 authorizedMacs[SIZE_MAC_ADDR * SIZE_AUTHORIZEDMACS_NUM];
 	int eap_frag_threshold;
+	int wps_delay_deauth_ms;
 } wpsap_wksp_t;
 
 /*

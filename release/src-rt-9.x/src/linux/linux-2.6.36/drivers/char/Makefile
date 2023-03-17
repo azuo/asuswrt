@@ -113,6 +113,7 @@ obj-$(CONFIG_PS3_FLASH)		+= ps3flash.o
 obj-$(CONFIG_RAMOOPS)		+= ramoops.o
 
 obj-$(CONFIG_JS_RTC)		+= js-rtc.o
+obj-$(CONFIG_BMOCA)             += bmoca/
 js-rtc-y = rtc.o
 
 # Files generated that shall be removed upon make clean

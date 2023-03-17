@@ -1,7 +1,7 @@
 /*
  * bcmevent read-only data shared by kernel or app layers
  *
- * Copyright (C) 2015, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2016, Broadcom. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- * $Id: bcmevent.c 526805 2015-01-15 02:27:42Z $
+ * $Id: bcmevent.c 610264 2016-01-06 15:21:18Z $
  */
 
 #include <typedefs.h>
@@ -93,9 +93,9 @@ static const bcmevent_name_str_t bcmevent_names[] = {
 	BCMEVENT_NAME(WLC_E_ACTION_FRAME_RX),
 	BCMEVENT_NAME(WLC_E_ACTION_FRAME_COMPLETE),
 #endif
-#if defined(NDIS) && (NDISVER >= 0x0620)
 	BCMEVENT_NAME(WLC_E_PRE_ASSOC_IND),
 	BCMEVENT_NAME(WLC_E_PRE_REASSOC_IND),
+#if defined(NDIS) && (NDISVER >= 0x0620)
 	BCMEVENT_NAME(WLC_E_CHANNEL_ADOPTED),
 	BCMEVENT_NAME(WLC_E_AP_STARTED),
 	BCMEVENT_NAME(WLC_E_DFS_AP_STOP),
@@ -168,6 +168,7 @@ static const bcmevent_name_str_t bcmevent_names[] = {
 	BCMEVENT_NAME(WLC_E_AUTHORIZED),
 	BCMEVENT_NAME(WLC_E_PROBREQ_MSG_RX),
 	BCMEVENT_NAME(WLC_E_DPSTA_INTF_IND),
+	BCMEVENT_NAME(WLC_E_PRE_ASSOC_RSEP_IND),
 };
 
 

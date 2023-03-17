@@ -4,7 +4,7 @@
  *
  * Definitions subject to change without notice.
  *
- * Copyright (C) 2015, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2016, Broadcom. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -18,7 +18,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: wlioctl.h 555388 2015-05-08 19:02:01Z $
+ * $Id: wlioctl.h 655358 2016-08-19 06:00:15Z $
  */
 
 #ifndef _wlioctl_h_
@@ -86,10 +86,36 @@ typedef struct wl_dfs_forced_params {
 
 #define DFS_PREFCHANLIST_VER 0x01
 #define WL_CHSPEC_LIST_FIXED_SIZE	OFFSETOF(chanspec_list_t, list)
+/* size of dfs forced param size given n channels are in the list */
+#define WL_DFS_FORCED_PARAMS_SIZE(n) \
+	(sizeof(wl_dfs_forced_t) + (((n) < 1) ? (0) : (((n) - 1)* sizeof(chanspec_t))))
 #define WL_DFS_FORCED_PARAMS_FIXED_SIZE \
 	(WL_CHSPEC_LIST_FIXED_SIZE + OFFSETOF(wl_dfs_forced_t, chspec_list))
 #define WL_DFS_FORCED_PARAMS_MAX_SIZE \
 	WL_DFS_FORCED_PARAMS_FIXED_SIZE + (WL_NUMCHANNELS * sizeof(chanspec_t))
+
+#define WLC_DC_DWDS_DATA_LENGTH 1
+
+enum {
+	WL_ASSOC_DC_DWDS_DISABLE = 0,	/* DWDS disabled by user */
+	WL_ASSOC_DC_DWDS_ENABLE = 1		/* DWDS enabled by user */
+};
+
+enum wl_assoc_dc_type {
+	WLC_DC_DWDS,
+	WLC_DC_OTHER
+};
+
+typedef struct {
+	uint8 type;
+	uint8 len;
+	uint8 data[1];
+} wl_dc_tlv_t;
+
+typedef struct {
+	uint16	len;
+	wl_dc_tlv_t tlv[1];
+} wl_dc_info_t;
 
 /* association decision information */
 typedef struct {
@@ -101,6 +127,7 @@ typedef struct {
 #else
 	int64		sys_time;		/* current system time */
 #endif
+	wl_dc_info_t	dc_info;
 } assoc_decision_t;
 
 #define ACTION_FRAME_SIZE 1800
@@ -1136,11 +1163,13 @@ typedef struct {
 								 */
 	uint32			rx_pkts_retried;	/* # rx with retry bit set */
 	uint32			tx_rate_fallback;	/* lowest fallback TX rate */
+	wl_rateset_args_t	rateset_adv;		/* rateset along with mcs index bitmap */
 } sta_info_t;
 
 #define WL_OLD_STAINFO_SIZE	OFFSETOF(sta_info_t, tx_tot_pkts)
 
-#define WL_STA_VER		4
+#define WL_STA_VER		5
+#define STAMON_MODULE_VER	1
 
 #endif /* LINUX_POSTMOGRIFY_REMOVAL */
 
@@ -1178,6 +1207,18 @@ typedef struct maclist {
 	uint count;			/* number of MAC addresses */
 	struct ether_addr ea[1];	/* variable length array of MAC addresses */
 } maclist_t;
+
+/* FOR ioctl that take the sta monitor information */
+typedef struct stamon_data {
+	struct ether_addr  ea;
+	int rssi;
+} stamon_data_t;
+
+typedef struct stamon_info {
+	int version;
+	uint count;
+	stamon_data_t sta_data[1];
+} stamon_info_t;
 
 #ifndef LINUX_POSTMOGRIFY_REMOVAL
 /* get pkt count struct passed through ioctl */
@@ -1360,6 +1401,13 @@ typedef struct wl_rpcal {
 	uint16 value;
 	uint16 update;
 } wl_rpcal_t;
+
+#define WL_NUM_RPCALPHASEVARS 5	/* number of rpcal phase vars */
+
+typedef struct wl_rpcal_phase {
+	uint16 value;
+	uint16 update;
+} wl_rpcal_phase_t;
 
 typedef struct wl_aci_args {
 	int enter_aci_thresh; /* Trigger level to start detecting ACI */
@@ -1627,6 +1675,16 @@ typedef struct {
 
 #define WL_RADAR_THR_VERSION	2
 
+typedef struct {
+	uint ver;
+	uint len;
+	int rssi_th[3];
+	uint8 rssi_gain_80[4];
+	uint8 rssi_gain_160[4];
+} wl_dyn_switch_th_t;
+
+#define WL_PHY_DYN_SWITCH_TH_VERSION	1
+
 /* RSSI per antenna */
 typedef struct {
 	uint32	version;		/* version field */
@@ -1645,6 +1703,31 @@ typedef struct {
 	/* chanspec cleared used to be a uint, add another to uint16 to maintain size */
 	uint16 pad;
 } wl_dfs_status_t;
+
+typedef struct {
+	uint state;		/* noted by WL_DFS_CACSTATE_XX */
+	uint duration;		/* time spent in ms in state */
+	chanspec_t chanspec;	/* chanspec of this core */
+	chanspec_t chanspec_last_cleared; /* chanspec last cleared for operation by scanning */
+	uint16 sub_type;	/* currently just the index of the core or the respective PLL */
+	uint16 pad;
+} wl_dfs_sub_status_t;
+
+#define WL_DFS_STATUS_ALL_VERSION	(1)
+typedef struct {
+	uint16 version;		/* version field; current max version 1 */
+	uint16 num_sub_status;
+	wl_dfs_sub_status_t  dfs_sub_status[1]; /* struct array of length num_sub_status */
+} wl_dfs_status_all_t;
+
+#define WL_DFS_AP_MOVE_VERSION	(1)
+typedef struct wl_dfs_ap_move_status {
+	int8 version;            /* version field; current max version 1 */
+	int8 move_status;        /* DFS move status */
+	chanspec_t chanspec;     /* New AP Chanspec */
+	wl_dfs_status_all_t scan_status; /* status; see dfs_status_all for wl_dfs_status_all_t */
+} wl_dfs_ap_move_status_t;
+
 
 /* data structure used in 'radar_status' wl interface, which is use to query radar det status */
 typedef struct {
@@ -3215,13 +3298,6 @@ typedef struct wl_chan_switch {
 	uint8 frame_type;		/* csa frame type, unicast or broadcast */
 } wl_chan_switch_t;
 
-typedef struct wl_dfs_ap_move_status {
-	int16 dfs_status;	/* DFS scan status */
-	chanspec_t chanspec;	/* New AP Chanspec */
-	wl_dfs_status_t cac_status;	/* CAC status */
-} wl_dfs_ap_move_status_t;
-
-
 /*
  * Preferred Network Offload (PNO, formerly PFN) defines
  */
@@ -4352,8 +4428,11 @@ typedef struct nbr_element {
 	uint8 reg;
 	uint8 channel;
 	uint8 phytype;
+	uint8 addtype; /* static for manual add or dynamic if auto-learning of neighbors */
 	uint8 pad;
 } nbr_element_t;
+#define NBR_ADD_STATIC 0
+#define NBR_ADD_DYNAMIC 1
 
 
 typedef enum event_msgs_ext_command {
@@ -6382,6 +6461,42 @@ typedef struct statreq {
 	uint16 reps;
 } statreq_t;
 
+typedef struct txstrmreq {
+	struct ether_addr da;	/* Destination address */
+	uint16 random_int;	/* Random interval for measurement start */
+	uint16 dur;		/* Measurement duration */
+	uint16 reps;		/* number of repetitions */
+	struct ether_addr peer;	/* Peer MAC address */
+	uint8 tid;		/* Traffic ID */
+	uint8 bin0_range;	/* Delay range of the first bin */
+} txstrmreq_t;
+
+typedef struct lcireq {
+	struct ether_addr da;	/* Destination address */
+	uint16 reps;		/* number of repetitions */
+	uint8 subj;		/* Local/Remote/Thid party */
+	uint8 lat_res;		/* Latitude requested Resolution */
+	uint8 lon_res;		/* Longitude requested Resolution */
+	uint8 alt_res;		/* Altitude requested Resolution */
+} lcireq_t;
+
+typedef struct civicreq {
+	struct ether_addr da;	/* Destination address */
+	uint16 reps;		/* number of repetitions */
+	uint8 subj;		/* Local/Remote/Thid party */
+	uint8 civloc_type;	/* Format of location info */
+	uint8 siu;		/* Unit of Location service interval */
+	uint16 si;		/* Location service interval */
+} civicreq_t;
+
+typedef struct locidreq {
+	struct ether_addr da;	/* Destination address */
+	uint16 reps;		/* number of repetitions */
+	uint8 subj;		/* Local/Remote/Thid party */
+	uint8 siu;		/* Unit of Location service interval */
+	uint16 si;		/* Location service interval */
+} locidreq_t;
+
 typedef struct wl_rrm_config_ioc {
 	uint16 version; /* command version */
 	uint16 id;      /* subiovar cmd ID */
@@ -6396,7 +6511,9 @@ enum {
 	WL_RRM_CONFIG_SET_LCI	= 2,	/* set LCI */
 	WL_RRM_CONFIG_GET_CIVIC	= 3,	/* get civic location */
 	WL_RRM_CONFIG_SET_CIVIC	= 4,	/* set civic location */
-	WL_RRM_CONFIG_MAX		= 5
+	WL_RRM_CONFIG_GET_LOCID	= 5,	/* get location identifier */
+	WL_RRM_CONFIG_SET_LOCID	= 6,	/* set location identifier */
+	WL_RRM_CONFIG_MAX	= 7
 };
 
 #define WL_RRM_CONFIG_NAME "rrm_config"
@@ -6456,7 +6573,12 @@ typedef struct wl_staprio_cfg {
 
 typedef enum wl_stamon_cfg_cmd_type {
 	STAMON_CFG_CMD_DEL = 0,
-	STAMON_CFG_CMD_ADD = 1
+	STAMON_CFG_CMD_ADD = 1,
+	STAMON_CFG_CMD_ENB = 2,
+	STAMON_CFG_CMD_DSB = 3,
+	STAMON_CFG_CMD_CNT = 4,
+	STAMON_CFG_CMD_RSTCNT = 5,
+	STAMON_CFG_CMD_GET_STATS = 6
 } wl_stamon_cfg_cmd_type_t;
 
 typedef struct wlc_stamon_sta_config {

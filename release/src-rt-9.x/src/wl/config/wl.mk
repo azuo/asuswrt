@@ -1,7 +1,7 @@
 # Helper makefile for building Broadcom wl device driver
 # This file maps wl driver feature flags (import) to WLFLAGS and WLFILES_SRC (export).
 #
-# Copyright (C) 2015, Broadcom Corporation. All Rights Reserved.
+# Copyright (C) 2016, Broadcom. All Rights Reserved.
 # 
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,8 @@
 # WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
 # OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
 # CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-# $Id: wl.mk 581443 2015-08-24 07:39:37Z $
+# $Id: wl.mk 667216 2016-10-26 09:59:12Z $
+
 
 
 WLFLAGS += -DWL_EXPORT_CURPOWER
@@ -87,6 +88,10 @@ ifeq ($(WLATF),1)
 	WLFLAGS += -DWLATF
 endif
 
+ifeq ($(WL_SPLIT_ASSOC),1)
+	WLFLAGS += -DSPLIT_ASSOC
+endif
+
 
 
 ifeq ($(DBG_HEAPCHECK),1)
@@ -114,6 +119,10 @@ ifeq ($(PSPRETEND),1)
 	WLFLAGS += -DPSPRETEND
 	WLFLAGS += -DWL_CS_PKTRETRY
 	WLFLAGS += -DWL_CS_RESTRICT_RELEASE
+endif
+
+ifeq ($(CLIENT_CSA),1)
+	WLFLAGS += -DCLIENT_CSA
 endif
 
 #ifdef BCMDBG_TRAP
@@ -1210,12 +1219,26 @@ endif
 # MONITOR
 ifeq ($(WL_MONITOR),1)
 	WLFLAGS += -DWL_MONITOR
+	WL_RADIOTAP=1
+endif
+#endif
+
+#ifdef WL_RADIOTAP
+ifeq ($(WL_RADIOTAP),1)
+	WLFLAGS += -DWL_RADIOTAP
+	WLFILES_SRC_HI += src/wl/sys/wl_radiotap.c
 endif
 #endif
 
 #ifdef WL_STA_MONITOR
 ifeq ($(WL_STA_MONITOR),1)
 	WLFLAGS += -DWL_STA_MONITOR
+endif
+#endif
+
+#ifdef ACKSUPR_MAC_FILTER
+ifeq ($(ACKSUPR_MAC_FILTER),1)
+        WLFLAGS += -DACKSUPR_MAC_FILTER
 endif
 #endif
 
@@ -2857,7 +2880,6 @@ ifeq ($(WL_AUTH_SHARED_OPEN),1)
 	WLFLAGS += -DWL_AUTH_SHARED_OPEN
 endif
 
-# Temporary WAR for 53573 Pcie interrupts issue - JIRA:HW53573-213 */
 ifeq ($(WL_POLL_INTERRUPTS),1)
 	WLFLAGS += -DWL_POLL_INTERRUPTS
 endif
@@ -2876,3 +2898,12 @@ endif
 WLFILES := $(sort $(notdir $(WLFILES_SRC)))
 
 #EXTRA_DFLAGS += -DWLTXPWR1_SIGNED
+
+ifeq ($(DISABLE_AMSDUTX_FOR_VI),1)
+	WLFLAGS += -DDISABLE_AMSDUTX_FOR_VI
+endif
+
+# Instead of disabling frameburst completly in dynamic frame burst logic, we enable RTS/CTS in frameburst.
+ifeq ($(FRAMEBURST_RTSCTS_PER_AMPDU),1)
+	WLFLAGS += -DFRAMEBURST_RTSCTS_PER_AMPDU
+endif

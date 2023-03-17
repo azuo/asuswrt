@@ -1,18 +1,18 @@
 /*
  * WPS API
  *
- * Copyright (C) 2015, Broadcom Corporation
+ * Broadcom Proprietary and Confidential. Copyright (C) 2016,
  * All Rights Reserved.
  * 
- * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
+ * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom;
  * the contents of this file may not be disclosed to third parties, copied
  * or duplicated in any form, in whole or in part, without the prior
- * written permission of Broadcom Corporation.
+ * written permission of Broadcom.
  *
  *
  * <<Broadcom-WL-IPTag/Proprietary:>>
  *
- * $Id: wpsapi.h 525052 2015-01-08 20:18:35Z $
+ * $Id: wpsapi.h 630557 2016-04-11 06:36:30Z $
  */
 
 #ifndef _WPSAPI_
@@ -57,6 +57,7 @@ int wps_getProcessStates();
 void wps_setProcessStates(int state);
 void wps_setStaDevName(char *str);
 void wps_setPinFailInfo(uint8 *mac, char *name, char *state);
+uint32 wps_createM8StaPskKey(void *g_mc);
 
 #ifdef __cplusplus
 }

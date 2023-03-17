@@ -3,7 +3,7 @@
  * Code to operate on PCI/E core, in NIC or BMAC high driver mode. Note that this file is not used
  * in firmware builds.
  *
- * Copyright (C) 2015, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2016, Broadcom. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -624,13 +624,6 @@ pcie_ltrenable(void *pch, uint32 mask, uint32 val)
 		return 0;
 }
 
-/* JIRA:SWWLAN-28745
-    val and return value:
-	0  Disabled
-	1  Enable using Message signaling[Var A]
-	2  Enable using Message signaling[Var B]
-	3  Enable using WAKE# signaling
-*/
 uint8
 pcie_obffenable(void *pch, uint32 mask, uint32 val)
 {
@@ -1476,7 +1469,6 @@ pcie_set_L1substate(void *pch, uint32 substate)
 	/* PML1_sub_control1 can only be accessed by OSL_PCI_xxxx_CONFIG */
 	data = OSL_PCI_READ_CONFIG(pi->osh, PCIECFGREG_PML1_SUB_CTRL1, sizeof(uint32)) & 0xfffffff0;
 
-	/* JIRA:SWWLAN-28455 */
 	if (substate & 1)
 		data |= PCI_PM_L1_2_ENA_MASK | ASPM_L1_2_ENA_MASK;
 
@@ -1498,7 +1490,6 @@ pcie_get_L1substate(void *pch)
 
 	data = OSL_PCI_READ_CONFIG(pi->osh, PCIECFGREG_PML1_SUB_CTRL1, sizeof(uint32));
 
-	/* JIRA:SWWLAN-28455 */
 	if (data & (PCI_PM_L1_2_ENA_MASK | ASPM_L1_2_ENA_MASK))
 		substate |= 1;
 

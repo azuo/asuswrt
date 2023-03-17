@@ -2,7 +2,7 @@
  * Initialization and support routines for self-booting compressed
  * image.
  *
- * Copyright (C) 2015, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2016, Broadcom. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: min_osl.c 581442 2015-08-24 07:39:22Z $
+ * $Id: min_osl.c 597759 2015-11-06 06:49:06Z $
  */
 
 #include <typedefs.h>
@@ -460,17 +460,18 @@ caches_on(void)
 		}
 	}
 
-	/* Apply page table address to CP15 */
-	asm volatile("mcr p15, 0, %0, c2, c0, 0" : : "r" (ptb) : "memory");
 	/* Set the access control to all-supervisor */
 	asm volatile("mcr p15, 0, %0, c3, c0, 0" : : "r" (~0));
+	/* Apply page table address to CP15 */
+	asm volatile("mcr p15, 0, %0, c2, c0, 0" : : "r" (ptb) : "memory");
+	asm volatile("mcr p15, 0, %0, c7, c5, 4	@ ISB " : : "r" (0) : "cc");
 
 	if (cid == CPUCFG_PART_CA7) {
 		/* enable CCI-400 snoop bit */
 		*(uint32 *)0x18305000 = 0x1;
 		/* loop until chage completed */
 		while (*(uint32 *)0x1830000c & 0x1)
-		 ;
+			;
 
 		/* enable coherency bits */
 		*(uint32 *)0x18010040 = 11;
@@ -479,12 +480,10 @@ caches_on(void)
 	}
 
 	/* Enable D$ and MMU */
-	asm("mrc p15, 0, %0, c1, c0, 0	@ get CR" : "=r" (val) : : "cc");
-	cp_delay();
+	asm volatile("mrc p15, 0, %0, c1, c0, 0	@ get CR" : "=r" (val) : : "cc");
 	val |= (CR_C | CR_M);
 	asm volatile("mcr p15, 0, %0, c1, c0, 0	@ set CR" : : "r" (val) : "cc");
-	isb();
-	cp_delay();
+	asm volatile("mcr p15, 0, %0, c7, c5, 4	@ ISB " : : "r" (0) : "cc");
 }
 
 void

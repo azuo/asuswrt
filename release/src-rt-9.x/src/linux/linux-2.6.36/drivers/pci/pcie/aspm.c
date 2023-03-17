@@ -749,6 +749,36 @@ void pci_disable_link_state(struct pci_dev *pdev, int state)
 }
 EXPORT_SYMBOL(pci_disable_link_state);
 
+/* Check the link if it can support PCIe ASPM */
+static bool pcie_aspm_link_supported(struct pcie_link_state *link)
+{
+	struct pci_dev *child, *parent = link->pdev;
+	struct pci_bus *linkbus = parent->subordinate;
+	bool ret = true;
+
+	child = list_entry(linkbus->devices.next, struct pci_dev, bus_list);
+
+	/* Upstream component:
+	 * ASM1182 PCIe-Switch doesn't support ASPM
+	 */
+	if (parent->vendor == PCI_VENDOR_ID_ASMEDIA) {
+		if (parent->device == PCI_DEVICE_ID_ASM1182_PCIESW) {
+			ret = false;
+		}
+	}
+	/* Downstream component:
+	 * ASM1182 PCIe-Switch and ASM1061 eSATA don't support ASPM
+	 */
+	else if (child->vendor == PCI_VENDOR_ID_ASMEDIA) {
+		if (child->device == PCI_DEVICE_ID_ASM1182_PCIESW ||
+			child->device == PCI_DEVICE_ID_ASM1061_IDE) {
+			ret = false;
+		}
+	}
+
+	return ret;
+}
+
 static int pcie_aspm_set_policy(const char *val, struct kernel_param *kp)
 {
 	int i;
@@ -766,6 +796,8 @@ static int pcie_aspm_set_policy(const char *val, struct kernel_param *kp)
 	mutex_lock(&aspm_lock);
 	aspm_policy = i;
 	list_for_each_entry(link, &link_list, sibling) {
+		if (!pcie_aspm_link_supported(link))
+			continue;
 		pcie_config_aspm_link(link, policy_to_aspm_state(link));
 		pcie_set_clkpm(link, policy_to_clkpm_state(link));
 	}

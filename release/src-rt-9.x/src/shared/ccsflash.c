@@ -1,7 +1,7 @@
 /*
  * Broadcom SiliconBackplane chipcommon serial flash interface
  *
- * Copyright (C) 2015, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2016, Broadcom. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -212,6 +212,15 @@ ccsflash_init(si_t *sih)
 				break;
 			}
 			break;
+		default :
+			ccsflash_cmd(osh, cc, SFLASH_MICRON_RDID);
+			id2 = R_REG(osh, &cc->flashdata);
+			id2 = ((id2 & 0xff) << 8) | ((id2 & 0xff00) >> 8);
+			switch (id2) {
+			case 0x20ba:
+				ccsflash.numblocks = 128;
+				break;
+			}
 		}
 		break;
 
@@ -288,7 +297,7 @@ ccsflash_read(hndsflash_t *sfl, uint offset, uint len, const uchar *buf)
 {
 	si_t *sih = sfl->sih;
 	uint8 *from, *to;
-	int cnt, i;
+	int i, cnt = len;
 
 	ASSERT(sih);
 
@@ -297,13 +306,6 @@ ccsflash_read(hndsflash_t *sfl, uint offset, uint len, const uchar *buf)
 
 	if ((offset + len) > sfl->size)
 		return -22;
-
-	if ((len >= 4) && (offset & 3))
-		cnt = 4 - (offset & 3);
-	else if ((len >= 4) && ((uintptr)buf & 3))
-		cnt = 4 - ((uintptr)buf & 3);
-	else
-		cnt = len;
 
 	if (sih->ccrev == 12) {
 		from = (uint8 *)OSL_UNCACHED((void *)SI_FLASH2 + offset);
@@ -315,6 +317,11 @@ ccsflash_read(hndsflash_t *sfl, uint offset, uint len, const uchar *buf)
 	to = (uint8 *)buf;
 
 	if ((offset + len) <= SI_FLASH_WINDOW) {
+		if ((len >= 4) && (offset & 3))
+			cnt = 4 - (offset & 3);
+		else if ((len >= 4) && ((uintptr)buf & 3))
+			cnt = 4 - ((uintptr)buf & 3);
+
 		if (cnt < 4) {
 			for (i = 0; i < cnt; i ++) {
 				/* Cannot use R_REG because in bigendian that will

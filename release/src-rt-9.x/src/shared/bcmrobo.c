@@ -1,7 +1,7 @@
 /*
  * Broadcom 53xx RoboSwitch device driver.
  *
- * Copyright (C) 2015, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2016, Broadcom. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: bcmrobo.c 581710 2015-08-25 09:58:34Z $
+ * $Id: bcmrobo.c 616019 2016-01-29 10:52:47Z $
  */
 
 
@@ -1161,11 +1161,23 @@ bcm_robo_attach(si_t *sih, void *h, char *vars, miird_f miird, miiwr_f miiwr)
 			si_pmu_chipcontrol(sih, 2, (0x3ff << 8), (led_gpios << 8));
 		}
 	} else if (BCM53573_CHIP(sih->chip)) {
-		/* Support internal robo switch LED on/off after A1 chip revision */
+		uint32 led_gpios = 0;
+		const char *var;
+
+		/* Support 53573 internal robo switch LED on/off after A1 chip revision */
 		if (sih->chippkg != BCM47189_PKG_ID && sih->chiprev >= 1) {
-			if (PMUCTL_ENAB(sih)) {
-				si_pmu_chipcontrol(sih, 8, 0x5, 0x5);
+			/* In 53573, bit 0: gpio0..4, bit 2: gpio 5..9 */
+			led_gpios = 0x5;
+
+			var = getvar(vars, "et_swleds");
+			if (var) {
+				led_gpios = bcm_strtoul(var, NULL, 0);
+				/* transfer nvram setting to register settings */
+				led_gpios = (led_gpios < 2 ? led_gpios : led_gpios + 2);
 			}
+		}
+		if (PMUCTL_ENAB(sih)) {
+			si_pmu_chipcontrol(sih, 8, 0x5, led_gpios);
 		}
 	}
 
@@ -2763,8 +2775,8 @@ robo_power_save_mode_clear_auto(robo_info_t *robo, int32 phy)
 {
 	uint16 val16;
 
-	if (robo->devid == DEVID53115) {
-		/* For 53115 0x1C is the MII address of the auto power
+	if (robo->devid == DEVID53115 || robo->devid == DEVID53125) {
+		/* For 53115/53125, 0x1C is the MII address of the auto power
 		 * down register. Bit 5 is enabling the mode
 		 * bits has the following purpose
 		 * 15 - write enable 10-14 shadow register select 01010 for
@@ -2775,8 +2787,8 @@ robo_power_save_mode_clear_auto(robo_info_t *robo, int32 phy)
 		val16 = 0xa800;
 		robo->miiwr(robo->h, phy, REG_MII_AUTO_PWRDOWN, val16);
 	} else if ((robo->sih->chip == BCM5356_CHIP_ID) ||
-	           (BCM53573_CHIP(robo->sih->chip)) ||
-	           (robo->sih->chip == BCM5357_CHIP_ID)) {
+	           (robo->sih->chip == BCM5357_CHIP_ID) ||
+	           BCM53573_CHIP(robo->sih->chip)) {
 		/* To disable auto power down mode
 		 * clear bit 5 of Aux Status 2 register
 		 * (Shadow reg 0x1b). Shadow register
@@ -2813,6 +2825,7 @@ robo_power_save_mode_clear_manual(robo_info_t *robo, int32 phy)
 	uint16 val16;
 
 	if ((robo->devid == DEVID53115) ||
+	    (robo->devid == DEVID53125) ||
 	    (robo->sih->chip == BCM5356_CHIP_ID)) {
 		/* For 53115 0x0 is the MII control register
 		 * Bit 11 is the power down mode bit
@@ -2827,7 +2840,6 @@ robo_power_save_mode_clear_manual(robo_info_t *robo, int32 phy)
 	} else if (robo->devid == DEVID5325) {
 		if ((robo->sih->chip == BCM5357_CHIP_ID) ||
 		    (robo->sih->chip == BCM4749_CHIP_ID) ||
-		    (BCM53573_CHIP(robo->sih->chip)) ||
 		    (robo->sih->chip == BCM53572_CHIP_ID)) {
 			robo->miiwr(robo->h, phy, 0x1f, 0x8b);
 			robo->miiwr(robo->h, phy, 0x14, 0x0008);
@@ -2914,12 +2926,15 @@ robo_power_save_mode_normal(robo_info_t *robo, int32 phy)
 	/* If the phy in the power save mode come out of it */
 	switch (robo->pwrsave_mode_phys[phy]) {
 		case ROBO_PWRSAVE_AUTO_MANUAL:
-		case ROBO_PWRSAVE_AUTO:
 			error = robo_power_save_mode_clear_auto(robo, phy);
-			if ((error == -1) ||
-			    (robo->pwrsave_mode_phys[phy] == ROBO_PWRSAVE_AUTO))
+			if (error == -1)
 				break;
 
+			error = robo_power_save_mode_clear_manual(robo, phy);
+			break;
+		case ROBO_PWRSAVE_AUTO:
+			error = robo_power_save_mode_clear_auto(robo, phy);
+			break;
 		case ROBO_PWRSAVE_MANUAL:
 			error = robo_power_save_mode_clear_manual(robo, phy);
 			break;
@@ -2940,19 +2955,22 @@ robo_power_save_mode_auto(robo_info_t *robo, int32 phy)
 	uint16 val16;
 
 	/* If the switch supports auto power down enable that */
-	if (robo->devid ==  DEVID53115) {
+	if (robo->devid == DEVID53115 || robo->devid == DEVID53125) {
 		/* For 53115 0x1C is the MII address of the auto power
 		 * down register. Bit 5 is enabling the mode
 		 * bits has the following purpose
 		 * 15 - write enable 10-14 shadow register select 01010 for
 		 * auto power 6-9 reserved 5 auto power mode enable
-		 * 4 sleep timer select : 1 means 5.4 sec
-		 * 0-3 wake up timer select: 0xF 1.26 sec
+		 * 4 sleep timer select: 0 means 2.7 sec, 1 means 5.4 sec
+		 * 0-3 wake up timer select: 0x1: 84 ms, 0xF: 1.26 sec
 		 */
-		robo->miiwr(robo->h, phy, REG_MII_AUTO_PWRDOWN, 0xA83F);
+		if (robo->devid == DEVID53125)
+			robo->miiwr(robo->h, phy, REG_MII_AUTO_PWRDOWN, 0xA831);
+		else
+			robo->miiwr(robo->h, phy, REG_MII_AUTO_PWRDOWN, 0xA83F);
 	} else if ((robo->sih->chip == BCM5356_CHIP_ID) ||
-	           (BCM53573_CHIP(robo->sih->chip)) ||
-	           (robo->sih->chip == BCM5357_CHIP_ID)) {
+	           (robo->sih->chip == BCM5357_CHIP_ID) ||
+	           BCM53573_CHIP(robo->sih->chip)) {
 		/* To enable auto power down mode set bit 5 of
 		 * Auxillary Status 2 register (Shadow reg 0x1b)
 		 * Shadow register access is enabled by writing
@@ -2964,10 +2982,17 @@ robo_power_save_mode_auto(robo_info_t *robo, int32 phy)
 
 		/* Enable auto power down by writing to Auxillary
 		 * Status 2 reg.
+		 * Bit[5]: 0 for APD disable, 1 for APD enable
+		 * Bit[4]: APD sleep time, 0 for 2.5 sec, 1 for 5 sec
+		 * Bit[3:0]: APD wakeup time, 1 for 40 ms
 		 */
 		val16 = robo->miird(robo->h, phy, REG_MII_AUX_STATUS2);
-		robo->miiwr(robo->h, phy, REG_MII_AUX_STATUS2,
-		            (val16 | (1 << 5)));
+		if (BCM53573_CHIP(robo->sih->chip)) {
+			val16 &= ~0xF;
+			val16 |= (1 << 5) | (1 << 4) | 0x1;
+		} else
+			val16 |= (1 << 5);
+		robo->miiwr(robo->h, phy, REG_MII_AUX_STATUS2, val16);
 
 		/* Undo shadow access */
 		val16 = robo->miird(robo->h, phy, REG_MII_BRCM_TEST);
@@ -2997,7 +3022,8 @@ robo_power_save_mode_manual(robo_info_t *robo, int32 phy)
 		return 0;
 
 	/* If the switch supports manual power down enable that */
-	if ((robo->devid ==  DEVID53115) ||
+	if ((robo->devid == DEVID53115) ||
+	    (robo->devid == DEVID53125) ||
 	    (robo->sih->chip == BCM5356_CHIP_ID)) {
 		/* For 53115 0x0 is the MII control register bit 11 is the
 		 * power down mode bit
@@ -3011,7 +3037,6 @@ robo_power_save_mode_manual(robo_info_t *robo, int32 phy)
 	} else  if (robo->devid == DEVID5325) {
 		if ((robo->sih->chip == BCM5357_CHIP_ID) ||
 		    (robo->sih->chip == BCM4749_CHIP_ID)||
-		    (BCM53573_CHIP(robo->sih->chip)) ||
 		    (robo->sih->chip == BCM53572_CHIP_ID)) {
 			robo->miiwr(robo->h, phy, 0x1f, 0x8b);
 			robo->miiwr(robo->h, phy, 0x14, 0x6000);
@@ -3063,13 +3088,16 @@ robo_power_save_mode(robo_info_t *robo, int32 mode, int32 phy)
 			break;
 
 		case ROBO_PWRSAVE_AUTO_MANUAL:
-			/* If the switch supports auto and manual power down
-			 * enable both of them
-			 */
+			error = robo_power_save_mode_auto(robo, phy);
+			if (error == -1)
+				break;
+
+			error = robo_power_save_mode_manual(robo, phy);
+			break;
+
 		case ROBO_PWRSAVE_AUTO:
 			error = robo_power_save_mode_auto(robo, phy);
-			if ((error == -1) || (mode == ROBO_PWRSAVE_AUTO))
-				break;
+			break;
 
 		case ROBO_PWRSAVE_MANUAL:
 			error = robo_power_save_mode_manual(robo, phy);

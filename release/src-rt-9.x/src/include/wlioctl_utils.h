@@ -1,7 +1,7 @@
 /*
  * Custom OID/ioctl related helper functions.
  *
- * Copyright (C) 2015, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2016, Broadcom. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  * <<Broadcom-WL-IPTag/Open:>>
  *
- * $Id: wlioctl_utils.h 556146 2015-05-12 19:32:39Z $
+ * $Id: wlioctl_utils.h 589409 2015-09-29 16:30:17Z $
  */
 
 #ifndef _wlioctl_utils_h_
@@ -43,5 +43,11 @@ extern int wl_cntbuf_to_xtlv_format(void *ctx, void *cntbuf,
 		bcm_get_data_from_xtlv_buf(((wl_cnt_info_t *)cntbuf)->data,	\
 		((wl_cnt_info_t *)cntbuf)->datalen, WL_CNT_XTLV_WLC,		\
 		NULL, BCM_XTLV_OPTION_ALIGN32)
+
+#define CHK_CNTBUF_DATALEN(cntbuf, ioctl_buflen) do {					\
+	if (((wl_cnt_info_t *)cntbuf)->datalen +			\
+		OFFSETOF(wl_cnt_info_t, data) > ioctl_buflen)	\
+		printf("%s: IOVAR buffer short!\n", __FUNCTION__);	\
+} while (0)
 
 #endif /* _wlioctl_utils_h_ */

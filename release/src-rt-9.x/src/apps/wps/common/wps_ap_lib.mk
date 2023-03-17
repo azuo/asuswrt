@@ -1,11 +1,11 @@
 #
-# Copyright (C) 2015, Broadcom Corporation
+# Broadcom Proprietary and Confidential. Copyright (C) 2016,
 # All Rights Reserved.
 # 
-# This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
+# This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom;
 # the contents of this file may not be disclosed to third parties, copied
 # or duplicated in any form, in whole or in part, without the prior
-# written permission of Broadcom Corporation.
+# written permission of Broadcom.
 #
 # $Id: wps_ap_lib.mk 517784 2014-11-26 18:25:11Z $
 # 
@@ -28,8 +28,8 @@ ifeq ($(BLDTYPE),debug)
 export CFLAGS = -Wall -Wnested-externs -g -D_TUDEBUGTRACE
 export CXXFLAGS = -Wall -Wnested-externs -g -D_TUDEBUGTRACE
 else
-export CFLAGS = -Os -Wall -Wnested-externs
-export CXXFLAGS = -Os -Wall -Wnested-externs
+export CFLAGS = -Wall -Wnested-externs
+export CXXFLAGS = -Wall -Wnested-externs
 endif
 
 
@@ -44,7 +44,7 @@ UPNPBASE = $(SRCBASE_ROUTER)/bcmupnp
 export INCLUDE = -I$(TOOLCHAINS)/include -I$(SRCBASE)/include -I$(SRCBASE)/common/include\
 	-I$(SRCBASE_ROUTER)/shared -I$(BRCMBASE)/include -I./include \
 	-I$(UPNPBASE)/include -I$(UPNPBASE)/upnp/linux -I$(UPNPBASE)/device/InternetGatewayDevice -I$(UPNPBASE)/device -I$(UPNPBASE)/device/WFADevice \
-	-I$(SRCBASE_ROUTER)/libbcm -I$(SRCBASE_ROUTER)/eapd$(BCMEX) $(WLAN_ComponentIncPathR) $(WLAN_StdIncPathR)
+	-I$(SRCBASE_ROUTER)/libbcm -I$(SRCBASE_ROUTER)/eapd $(WLAN_ComponentIncPathR) $(WLAN_StdIncPathR)
 
 # Include external openssl path
 ifeq ($(EXTERNAL_OPENSSL),1)

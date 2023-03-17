@@ -1,7 +1,7 @@
 /*
  * NVRAM variable manipulation
  *
- * Copyright (C) 2015, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2016, Broadcom. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -37,6 +37,10 @@ struct nvram_header {
 struct nvram_tuple {
 	char *name;
 	char *value;
+	unsigned short len;
+	unsigned short type;
+	unsigned short acc_level;
+	unsigned short enc;
 	struct nvram_tuple *next;
 };
 

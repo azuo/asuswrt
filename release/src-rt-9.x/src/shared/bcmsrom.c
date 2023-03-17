@@ -3,7 +3,7 @@
  *
  * Despite its file name, OTP contents is also parsed in this file.
  *
- * Copyright (C) 2015, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2016, Broadcom. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -17,7 +17,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: bcmsrom.c 558869 2015-05-25 14:49:26Z $
+ * $Id: bcmsrom.c 644423 2016-06-20 11:12:52Z $
  */
 
 /*
@@ -5936,7 +5936,7 @@ BCMATTACHFN(initvars_flash)(si_t *sih, osl_t *osh, char **base, uint len)
 {
 	char *vp = *base;
 	char *flash;
-	int err;
+	int err = 0;
 	char *s;
 	uint l, dl, copy_len;
 	char devpath[SI_DEVPATH_BUFSZ], devpath_pcie[SI_DEVPATH_BUFSZ];
@@ -5946,7 +5946,14 @@ BCMATTACHFN(initvars_flash)(si_t *sih, osl_t *osh, char **base, uint len)
 	/* allocate memory and read in flash */
 	if (!(flash = MALLOC(osh, MAX_NVRAM_SPACE)))
 		return BCME_NOMEM;
+#ifdef BCA_HNDROUTER
+	/* In BCA SDK, nvram_getall() returns the bytes
+	 * read count not the status.
+	 */
+	if (!(nvram_getall(flash, MAX_NVRAM_SPACE)))
+#else
 	if ((err = nvram_getall(flash, MAX_NVRAM_SPACE)))
+#endif
 		goto exit;
 
 	/* create legacy devpath prefix */

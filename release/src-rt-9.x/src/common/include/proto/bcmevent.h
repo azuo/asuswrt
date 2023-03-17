@@ -3,7 +3,7 @@
  *
  * Dependencies: proto/bcmeth.h
  *
- * Copyright (C) 2015, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2016, Broadcom. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -20,7 +20,7 @@
  *
  * <<Broadcom-WL-IPTag/Open:>>
  *
- * $Id: bcmevent.h 583652 2015-09-02 13:18:13Z $
+ * $Id: bcmevent.h 663438 2016-10-05 10:48:01Z $
  *
  */
 
@@ -32,11 +32,12 @@
 #ifndef _BCMEVENT_H_
 #define _BCMEVENT_H_
 
-#ifndef _TYPEDEFS_H_
 #include <typedefs.h>
-#endif
 /* #include <ethernet.h> -- TODO: req., excluded to overwhelming coupling (break up ethernet.h) */
 #include <proto/bcmeth.h>
+#if defined(HEALTH_CHECK) || defined(DNGL_EVENT_SUPPORT)
+#include <proto/dnglevent.h>
+#endif /* HEALTH_CHECK || DNGL_EVENT_SUPPORT */
 
 /* This marks the start of a packed structure section. */
 #include <packed_section_start.h>
@@ -90,6 +91,19 @@ typedef BWL_PRE_PACKED_STRUCT struct bcm_event {
 	wl_event_msg_t		event;
 	/* data portion follows */
 } BWL_POST_PACKED_STRUCT bcm_event_t;
+
+/*
+ * used by host event
+ * note: if additional event types are added, it should go with is_wlc_event_frame() as well.
+ */
+typedef union bcm_event_msg_u {
+	wl_event_msg_t		event;
+#if defined(HEALTH_CHECK) || defined(DNGL_EVENT_SUPPORT)
+	bcm_dngl_event_msg_t	dngl_event;
+#endif /* HEALTH_CHECK || DNGL_EVENT_SUPPORT */
+
+	/* add new event here */
+} bcm_event_msg_u_t;
 
 #define BCM_MSG_LEN	(sizeof(bcm_event_t) - sizeof(bcmeth_hdr_t) - sizeof(struct ether_header))
 
@@ -211,6 +225,7 @@ typedef BWL_PRE_PACKED_STRUCT struct bcm_event {
 #define WLC_E_BSS_LOAD			114	/* Inform host of beacon bss load */
 #define WLC_E_MIMO_PWR_SAVE		115	/* Inform host MIMO PWR SAVE learning events */
 #define WLC_E_LEAKY_AP_STATS	116 /* Inform host leaky Ap stats events */
+#define WLC_E_ALLOW_CREDIT_BORROW 117	/* Allow or disallow wlfc credit borrowing in DHD */
 #define WLC_E_MSCH			120	/* Multiple channel scheduler event */
 #define WLC_E_CSA_START_IND		121
 #define WLC_E_CSA_DONE_IND		122
@@ -230,23 +245,46 @@ typedef BWL_PRE_PACKED_STRUCT struct bcm_event {
 #define WLC_E_PROBREQ_MSG_RX	137 /* probe req with wl_event_rx_frame_data_t header */
 #define WLC_E_PFN_SCAN_COMPLETE	138	/* PFN completed scan of network list */
 #define WLC_E_RMC_EVENT		139	/* RMC Event */
-#define WLC_E_DPSTA_INTF_IND	140 /* DPSTA interface indication */
-#define WLC_E_RRM			141	/* RRM Event */
-#define WLC_E_PFN_SSID_EXT      142    /* SSID EXT event */
-#define WLC_E_ROAM_EXP_EVENT    143  /* Expanded roam event */
-#define WLC_E_ULP			146  /* ULP entered indication */
-#define WLC_E_ULIST			147  /* Ucode register list */
-#define WLC_E_UDUMP 			148  /* Ucode register dump */
-#define WLC_E_PRE_ASSOC_RSEP_IND        149	/* assoc resp received */
-#define WLC_E_LAST			150	/* highest val + 1 for range checking */
-#if (WLC_E_LAST > 150)
-#error "WLC_E_LAST: Invalid value for last event; must be <= 150."
+#define WLC_E_DPSTA_INTF_IND	140	/* DPSTA interface indication */
+#define WLC_E_RRM		141	/* RRM Event */
+#define WLC_E_PFN_SSID_EXT	142	/* SSID EXT event */
+#define WLC_E_ROAM_EXP_EVENT	143	/* Expanded roam event */
+#define WLC_E_ULP			146	/* ULP entered indication */
+#define WLC_E_MACDBG			147	/* Ucode debugging event */
+#define WLC_E_RESERVED			148	/* reserved */
+#define WLC_E_PRE_ASSOC_RSEP_IND	149	/* assoc resp received */
+#define WLC_E_PSK_AUTH			150	/* PSK AUTH WPA2-PSK 4 WAY Handshake failure */
+#define WLC_E_TKO			151     /* TCP keepalive offload */
+#define WLC_E_SDB_TRANSITION            152     /* SDB mode-switch event */
+#define WLC_E_NATOE_NFCT		153     /* natoe event */
+#define WLC_E_TEMP_THROTTLE		154	/* Temperature throttling control event */
+#define WLC_E_LINK_QUALITY		155     /* Link quality measurement complete */
+#define WLC_E_BSSTRANS_RESP		156 /* BSS Transition Response received */
+#define WLC_E_HE_TWT_SETUP		157	/* HE TWT Setup Complete event */
+#define WLC_E_NAN_DATA_IND		158	/* NAN 2.0 data indication */
+#define WLC_E_NAN_DATA_CONF		159	/* NAN 2.0 data confirmation */
+#define WLC_E_RADAR_DETECTED		160	/* Radar Detected event */
+#define WLC_E_RANGING_EVENT		161	/* Ranging event */
+#define WLC_E_INVALID_IE		162	/* Received invalid IE */
+#define WLC_E_MODE_SWITCH		163	/* Mode switch event */
+#define WLC_E_PKT_FILTER		164	/* Packet filter event */
+#define WLC_E_DMA_TXFLUSH_COMPLETE		165	/* TxFlush done before changing
+											* tx/rxchain
+											*/
+#define WLC_E_FBT			166	/* FBT event */
+#define WLC_E_LAST			167	/* highest val + 1 for range checking */
+#if (WLC_E_LAST > 167)
+#error "WLC_E_LAST: Invalid value for last event; must be <= 166."
 #endif /* WLC_E_LAST */
 
 /* define an API for getting the string name of an event */
 extern const char *bcmevent_get_name(uint event_type);
 extern void wl_event_to_host_order(wl_event_msg_t * evt);
 extern void wl_event_to_network_order(wl_event_msg_t * evt);
+
+/* validate if the event is proper and if valid copy event header to event */
+extern int is_wlc_event_frame(void *pktdata, uint pktlen, uint16 exp_usr_subtype,
+	bcm_event_msg_u_t *out_event);
 
 /* conversion between host and network order for events */
 void wl_event_to_host_order(wl_event_msg_t * evt);
@@ -272,6 +310,49 @@ void wl_event_to_network_order(wl_event_msg_t * evt);
 #define WLC_E_STATUS_ERROR		16	/* request failed due to error */
 #define WLC_E_STATUS_INVALID 0xff  /* Invalid status code to init variables. */
 
+/* 4-way handshake event type */
+#define WLC_E_PSK_AUTH_SUB_EAPOL_START		1	/* EAPOL start */
+#define WLC_E_PSK_AUTH_SUB_EAPOL_DONE		2	/* EAPOL end */
+/* GTK event type */
+#define	WLC_E_PSK_AUTH_SUB_GTK_DONE		3	/* GTK end */
+
+/* 4-way handshake event status code */
+#define WLC_E_STATUS_PSK_AUTH_WPA_TIMOUT	1	/* operation timed out */
+#define WLC_E_STATUS_PSK_AUTH_MIC_WPA_ERR		2	/* MIC error */
+#define WLC_E_STATUS_PSK_AUTH_IE_MISMATCH_ERR		3	/* IE Missmatch error */
+#define WLC_E_STATUS_PSK_AUTH_REPLAY_COUNT_ERR		4
+#define WLC_E_STATUS_PSK_AUTH_PEER_BLACKISTED	5	/* Blaclisted peer */
+#define WLC_E_STATUS_PSK_AUTH_GTK_REKEY_FAIL	6	/* GTK event status code */
+
+/* SDB transition status code */
+#define WLC_E_STATUS_SDB_START          1
+#define WLC_E_STATUS_SDB_COMPLETE       2
+
+/* SDB transition reason code */
+#define WLC_E_REASON_HOST_DIRECT	0
+#define WLC_E_REASON_INFRA_ASSOC	1
+#define WLC_E_REASON_INFRA_ROAM		2
+#define WLC_E_REASON_INFRA_DISASSOC	3
+#define WLC_E_REASON_NO_MODE_CHANGE_NEEDED	4
+
+/* WLC_E_SDB_TRANSITION event data */
+#define WL_MAX_BSSCFG     4
+#define WL_EVENT_SDB_TRANSITION_VER     1
+typedef struct wl_event_sdb_data {
+	uint8 wlunit;           /* Core index */
+	uint8 is_iftype;        /* Interface Type(Station, SoftAP, P2P_GO, P2P_GC */
+	uint16 chanspec;        /* Interface Channel/Chanspec */
+	char ssidbuf[(4 * 32) + 1];	/* SSID_FMT_BUF_LEN: ((4 * DOT11_MAX_SSID_LEN) + 1) */
+} wl_event_sdb_data_t;
+
+typedef struct wl_event_sdb_trans {
+	uint8 version;          /* Event Data Version */
+	uint8 rsdb_mode;
+	uint8 enable_bsscfg;
+	uint8 reserved;
+	struct wl_event_sdb_data values[WL_MAX_BSSCFG];
+} wl_event_sdb_trans_t;
+
 /* roam reason codes */
 #define WLC_E_REASON_INITIAL_ASSOC	0	/* initial assoc */
 #define WLC_E_REASON_LOW_RSSI		1	/* roamed due to low RSSI */
@@ -279,7 +360,6 @@ void wl_event_to_network_order(wl_event_msg_t * evt);
 #define WLC_E_REASON_DISASSOC		3	/* roamed due to DISASSOC indication */
 #define WLC_E_REASON_BCNS_LOST		4	/* roamed due to lost beacons */
 
-/* Roam codes used primarily by CCX */
 #define WLC_E_REASON_FAST_ROAM_FAILED	5	/* roamed due to fast roam failure */
 #define WLC_E_REASON_DIRECTED_ROAM	6	/* roamed due to request by AP */
 #define WLC_E_REASON_TSPEC_REJECTED	7	/* roamed due to TSPEC rejection */
@@ -290,6 +370,7 @@ void wl_event_to_network_order(wl_event_msg_t * evt);
 #define WLC_E_REASON_REQUESTED_ROAM	11
 #define WLC_E_REASON_BSSTRANS_REQ	11	/* roamed due to BSS Transition request by AP */
 #define WLC_E_REASON_LOW_RSSI_CU		12 /* roamed due to low RSSI and Channel Usage */
+#define WLC_E_REASON_RADAR_DETECTED	13	/* roamed due to radar detection by STA */
 
 /* prune reason codes */
 #define WLC_E_PRUNE_ENCR_MISMATCH	1	/* encryption mismatch */
@@ -326,6 +407,14 @@ void wl_event_to_network_order(wl_event_msg_t * evt);
 #define WLC_E_SUP_SEND_FAIL		13	/* message send failure */
 #define WLC_E_SUP_DEAUTH		14	/* received FC_DEAUTH */
 #define WLC_E_SUP_WPA_PSK_TMO		15	/* WPA PSK 4-way handshake timeout */
+#define WLC_E_SUP_WPA_PSK_M1_TMO	16	/* WPA PSK 4-way handshake M1 timeout */
+#define WLC_E_SUP_WPA_PSK_M3_TMO	17	/* WPA PSK 4-way handshake M3 timeout */
+
+
+/* Ucode reason codes carried in the WLC_E_MACDBG event */
+#define WLC_E_MACDBG_LIST_PSM		0	/* Dump list update for PSM registers */
+#define WLC_E_MACDBG_LIST_PSMX		1	/* Dump list update for PSMx registers */
+#define WLC_E_MACDBG_REGALL		2	/* Dump all registers */
 
 /* Event data for events that include frames received over the air */
 /* WLC_E_PROBRESP_MSG
@@ -351,6 +440,14 @@ typedef struct wl_event_data_if {
 	uint8 role;		/* see I/F role */
 } wl_event_data_if_t;
 
+/* WLC_E_NATOE event data */
+typedef struct wl_event_data_natoe {
+	uint32 natoe_active;
+	uint32 sta_ip;
+	uint16 start_port;
+	uint16 end_port;
+} wl_event_data_natoe_t;
+
 /* opcode in WLC_E_IF event */
 #define WLC_E_IF_ADD		1	/* bsscfg add */
 #define WLC_E_IF_DEL		2	/* bsscfg delete */
@@ -363,6 +460,7 @@ typedef struct wl_event_data_if {
 #define WLC_E_IF_ROLE_P2P_GO		3	/* P2P Group Owner */
 #define WLC_E_IF_ROLE_P2P_CLIENT	4	/* P2P Client */
 #define WLC_E_IF_ROLE_IBSS              8       /* IBSS */
+#define WLC_E_IF_ROLE_NAN              9       /* NAN */
 
 /* WLC_E_RSSI event data */
 typedef struct wl_event_data_rssi {
@@ -421,6 +519,9 @@ typedef BWL_PRE_PACKED_STRUCT struct ndis_link_parms {
 #define WLAN_TDLS_SET_WFD_DISABLED	14
 #endif
 
+/* WLC_E_RANGING_EVENT subtypes */
+#define WLC_E_RANGING_RESULTS	0
+
 
 /* GAS event data */
 typedef BWL_PRE_PACKED_STRUCT struct wl_event_gas {
@@ -447,6 +548,9 @@ typedef BWL_PRE_PACKED_STRUCT struct wl_event_sd {
 	uint8	count;			/* number of tlvs */
 	wl_sd_tlv_t	tlv[1];		/* service discovery TLV */
 } BWL_POST_PACKED_STRUCT wl_event_sd_t;
+
+/* WLC_E_PKT_FILTER event sub-classification codes */
+#define WLC_E_PKT_FILTER_TIMEOUT	1 /* Matching packet not received in last timeout seconds */
 
 /* Note: proxd has a new API (ver 3.0) deprecates the following */
 
@@ -528,6 +632,16 @@ typedef struct wl_intfer_event {
 	uint8 txfail_histo[WLINTFER_STATS_NSMPLS]; /* txfail histo */
 } wl_intfer_event_t;
 
+#define RRM_EVENT_VERSION		0
+typedef struct wl_rrm_event {
+	int16 version;
+	int16 len;
+	int16 cat;		/* Category */
+	int16 subevent;
+	char payload[1]; /* Measurement payload */
+} wl_rrm_event_t;
+
+
 /* WLC_E_PSTA_PRIMARY_INTF_IND event data */
 typedef struct wl_psta_primary_intf_event {
 	struct ether_addr prim_ea;	/* primary intf ether addr */
@@ -545,25 +659,41 @@ typedef struct wl_dpsta_intf_event {
 
 /*  **********  NAN protocol events/subevents  ********** */
 #define NAN_EVENT_BUFFER_SIZE 512 /* max size */
-/* nan application events to the host driver */
-typedef enum nan_app_events {
-	WL_NAN_EVENT_START = 1,     /* NAN cluster started */
-	WL_NAN_EVENT_JOIN = 2,      /* Joined to a NAN cluster */
-	WL_NAN_EVENT_ROLE = 3,      /* Role or State changed */
+/* NAN Events sent by firmware */
+typedef enum wl_nan_events {
+	WL_NAN_EVENT_START = 1,		/* NAN cluster started */
+	WL_NAN_EVENT_JOIN = 2,		/* Joined to a NAN cluster */
+	WL_NAN_EVENT_ROLE = 3,	/* Role changed */
 	WL_NAN_EVENT_SCAN_COMPLETE = 4,
 	WL_NAN_EVENT_DISCOVERY_RESULT = 5,
 	WL_NAN_EVENT_REPLIED = 6,
 	WL_NAN_EVENT_TERMINATED = 7,	/* the instance ID will be present in the ev data */
 	WL_NAN_EVENT_RECEIVE = 8,
-	WL_NAN_EVENT_STATUS_CHG = 9,  /* generated on any change in nan_mac status */
-	WL_NAN_EVENT_MERGE = 10,      /* Merged to a NAN cluster */
-	WL_NAN_EVENT_STOP = 11,       /* NAN stopped */
-	WL_NAN_EVENT_P2P = 12,       /* NAN P2P EVENT */
+	WL_NAN_EVENT_STATUS_CHG = 9,	/* generated on any change in nan_mac status */
+	WL_NAN_EVENT_MERGE = 10,	/* Merged to a NAN cluster */
+	WL_NAN_EVENT_STOP = 11,		/* NAN stopped */
+	WL_NAN_EVENT_P2P = 12,		/* NAN P2P EVENT */
 	WL_NAN_EVENT_WINDOW_BEGIN_P2P = 13, /* Event for begin of P2P further availability window */
 	WL_NAN_EVENT_WINDOW_BEGIN_MESH = 14,
 	WL_NAN_EVENT_WINDOW_BEGIN_IBSS = 15,
 	WL_NAN_EVENT_WINDOW_BEGIN_RANGING = 16,
-	WL_NAN_EVENT_POST_DISC = 17, /* Event for post discovery data */
+	WL_NAN_EVENT_POST_DISC = 17,	/* Event for post discovery data */
+	WL_NAN_EVENT_DATA_IF_ADD = 18,	/* Event for Data IF add */
+	WL_NAN_EVENT_DATA_PEER_ADD = 19, /* Event for peer add */
+	/* nan 2.0 */
+	WL_NAN_EVENT_DATA_IND = 20, /* Will be removed after source code is committed. */
+	WL_NAN_EVENT_PEER_DATAPATH_IND = 20, /* Peer's Datapath request Indication to Host */
+	WL_NAN_EVENT_DATA_CONF = 21, /* Will be removed after source code is committed. */
+	WL_NAN_EVENT_DATAPATH_ESTB = 21, /* Datapath Established to Host */
+	WL_NAN_EVENT_SDF_RX = 22,	/* entire service discovery frame */
+	WL_NAN_EVENT_DATA_END = 23,	/* Will be removed after source code is committed. */
+	WL_NAN_EVENT_DATAPATH_END = 23,	/* Data End to Host */
+	WL_NAN_EVENT_BCN_RX = 24,	/* received beacon payload */
+	WL_NAN_EVENT_PEER_DATAPATH_RESP = 25, /* Peer's Data Response indication to Host */
+	WL_NAN_EVENT_PEER_DATAPATH_CONF = 26, /* Peer's Data Confirm indication to Host */
+	WL_NAN_EVENT_RNG_REQ_IND = 27,  /* Range Request Indication to Host */
+	WL_NAN_EVENT_RNG_RPT_IND = 28,  /* Range Report Indication to Host */
+	WL_NAN_EVENT_RNG_TERM_IND = 29,  /* Range Termination Indication to Host */
 	WL_NAN_EVENT_INVALID	/* delimiter for max value */
 } nan_app_events_e;
 
@@ -573,13 +703,153 @@ typedef enum nan_app_events {
 /* WLC_E_ULP event data */
 #define WL_ULP_EVENT_VERSION		1
 #define WL_ULP_DISABLE_CONSOLE		1	/* Disable console message on ULP entry */
+#define WL_ULP_UCODE_DOWNLOAD		2       /* Download ULP ucode file */
 
 typedef struct wl_ulp_event {
 	uint16 version;
 	uint16 ulp_dongle_action;
 } wl_ulp_event_t;
 
+/* TCP keepalive event data */
+typedef BWL_PRE_PACKED_STRUCT struct wl_event_tko {
+	uint8 index;		/* TCP connection index, 0 to max-1 */
+	uint8 pad[3];		/* 4-byte struct alignment */
+} BWL_POST_PACKED_STRUCT wl_event_tko_t;
 
+typedef struct {
+	uint8 radar_type;       /* one of RADAR_TYPE_XXX */
+	uint16 min_pw;          /* minimum pulse-width (usec * 20) */
+	uint16 max_pw;          /* maximum pulse-width (usec * 20) */
+	uint16 min_pri;         /* minimum pulse repetition interval (usec) */
+	uint16 max_pri;         /* maximum pulse repetition interval (usec) */
+	uint16 subband;         /* subband/frequency */
+} radar_detected_event_info_t;
+typedef struct wl_event_radar_detect_data {
+
+	uint32 version;
+	uint16 current_chanspec; /* chanspec on which the radar is recieved */
+	uint16 target_chanspec; /*  Target chanspec after detection of radar on current_chanspec */
+	radar_detected_event_info_t radar_info[2];
+} wl_event_radar_detect_data_t;
+
+
+#define WL_EVENT_MODESW_VER_1			1
+#define WL_EVENT_MODESW_VER_CURRENT		WL_EVENT_MODESW_VER_1
+
+#define WL_E_MODESW_FLAG_MASK_DEVICE		0x01u /* mask of device: belongs to local or peer */
+#define WL_E_MODESW_FLAG_MASK_FROM		0x02u /* mask of origin: firmware or user */
+#define WL_E_MODESW_FLAG_MASK_STATE		0x0Cu /* mask of state: modesw progress state */
+
+#define WL_E_MODESW_FLAG_DEVICE_LOCAL		0x00u /* flag - device: info is about self/local */
+#define WL_E_MODESW_FLAG_DEVICE_PEER		0x01u /* flag - device: info is about peer */
+
+#define WL_E_MODESW_FLAG_FROM_FIRMWARE		0x00u /* flag - from: request is from firmware */
+#define WL_E_MODESW_FLAG_FROM_USER		0x02u /* flag - from: request is from user/iov */
+
+#define WL_E_MODESW_FLAG_STATE_REQUESTED	0x00u /* flag - state: mode switch request */
+#define WL_E_MODESW_FLAG_STATE_INITIATED	0x04u /* flag - state: switch initiated */
+#define WL_E_MODESW_FLAG_STATE_COMPLETE		0x08u /* flag - state: switch completed/success */
+#define WL_E_MODESW_FLAG_STATE_FAILURE		0x0Cu /* flag - state: failed to switch */
+
+/* Get sizeof *X including variable data's length where X is pointer to wl_event_mode_switch_t */
+#define WL_E_MODESW_SIZE(X) (sizeof(*(X)) + (X)->length)
+
+/* Get variable data's length where X is pointer to wl_event_mode_switch_t */
+#define WL_E_MODESW_DATA_SIZE(X) (((X)->length > sizeof(*(X))) ? ((X)->length - sizeof(*(X))) : 0)
+
+#define WL_E_MODESW_REASON_UNKNOWN		0u /* reason: UNKNOWN */
+#define WL_E_MODESW_REASON_ACSD			1u /* reason: ACSD (based on events from FW */
+#define WL_E_MODESW_REASON_OBSS_DBS		2u /* reason: OBSS DBS (eg. on interference) */
+#define WL_E_MODESW_REASON_DFS			3u /* reason: DFS (eg. on subband radar) */
+#define WL_E_MODESW_REASON_DYN160		4u /* reason: DYN160 (160/2x2 - 80/4x4) */
+
+/* event structure for WLC_E_MODE_SWITCH */
+typedef struct {
+	uint16 version;
+	uint16 length;	/* size including 'data' field */
+	uint16 opmode_from;
+	uint16 opmode_to;
+	uint32 flags;	/* bit 0: peer(/local==0);
+			 * bit 1: user(/firmware==0);
+			 * bits 3,2: 00==requested, 01==initiated,
+			 *           10==complete, 11==failure;
+			 * rest: reserved
+			 */
+	uint16 reason;	/* value 0: unknown, 1: ACSD, 2: OBSS_DBS,
+			 *       3: DFS, 4: DYN160, rest: reserved
+			 */
+	uint16 data_offset;	/* offset to 'data' from beginning of this struct.
+				 * fields may be added between data_offset and data
+				 */
+	/* ADD NEW FIELDS HERE */
+	uint8 data[];	/* reason specific data; could be empty */
+} wl_event_mode_switch_t;
+
+/* when reason in WLC_E_MODE_SWITCH is DYN160, data will carry the following structure */
+typedef struct {
+	uint16 trigger;		/* value 0: MU to SU, 1: SU to MU, 2: metric_dyn160, 3:re-/assoc,
+				 *       4: disassoc, 5: rssi, 6: traffic, 7: interference,
+				 *       8: chanim_stats
+				 */
+	struct ether_addr sta_addr;	/* causal STA's MAC address when known */
+	uint16 metric_160_80;		/* latest dyn160 metric */
+	uint8 nss;		/* NSS of the STA */
+	uint8 bw;		/* BW of the STA */
+	int8 rssi;		/* RSSI of the STA */
+	uint8 traffic;		/* internal metric of traffic */
+} wl_event_mode_switch_dyn160;
+
+#define WL_EVENT_FBT_VER_1		1
+
+#define WL_E_FBT_TYPE_FBT_OTD_AUTH	1
+
+/* event structure for WLC_E_FBT */
+typedef struct {
+	uint16 version;
+	uint16 length;	/* size including 'data' field */
+	uint16 type; /* value 0: unknown, 1: FBT OTD Auth Req */
+	uint16 data_offset;	/* offset to 'data' from beginning of this struct.
+				 * fields may be added between data_offset and data
+				 */
+	/* ADD NEW FIELDS HERE */
+	uint8 data[];	/* type specific data; could be empty */
+} wl_event_fbt_t;
+
+/* TWT Setup Completion is designed to notify the user of TWT Setup process
+ * status. When 'status' field is value of BCME_OK, the user must check the
+ * 'setup_cmd' field value in 'wl_twt_sdesc_t' structure that at the end of
+ * the event data to see the response from the TWT Responding STA; when
+ * 'status' field is value of BCME_ERROR or non BCME_OK, user must not use
+ * anything from 'wl_twt_sdesc_t' structure as it is the TWT Requesting STA's
+ * own TWT parameter.
+ */
+
+#define WL_TWT_SETUP_CPLT_VER	0
+
+/* TWT Setup Completion event data */
+typedef struct wl_twt_setup_cplt {
+	uint16 version;
+	uint16 length;	/* the byte count of fields from 'dialog' onwards */
+	uint8 dialog;	/* the dialog token user supplied to the TWT setup API */
+	uint8 pad[3];
+	int32 status;
+	/* wl_twt_sdesc_t desc; - defined in wlioctl.h */
+} wl_twt_setup_cplt_t;
+
+#define WL_INVALID_IE_EVENT_VERSION	0
+
+/* Invalid IE Event data */
+typedef struct wl_invalid_ie_event {
+	uint16 version;
+	uint16 len;      /* Length of the invalid IE copy */
+	uint16 type;     /* Type/subtype of the frame which contains the invalid IE */
+	uint16 error;    /* error code of the wrong IE, defined in ie_error_code_t */
+	uint8  ie[];     /* Variable length buffer for the invalid IE copy */
+} wl_invalid_ie_event_t;
+
+typedef enum ie_error_code {
+	IE_ERROR_OUT_OF_RANGE = 0x01
+} ie_error_code_t;
 /* This marks the end of a packed structure section. */
 #include <packed_section_end.h>
 

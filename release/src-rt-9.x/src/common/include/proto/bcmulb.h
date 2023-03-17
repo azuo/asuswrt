@@ -17,18 +17,18 @@
  * Refer to following Twiki for further details:
  * http://hwnbu-twiki.broadcom.com/bin/view/Mwgroup/UltraLowBandMode
  *
- * Copyright (C) 2015, Broadcom Corporation
+ * Broadcom Proprietary and Confidential. Copyright (C) 2016,
  * All Rights Reserved.
  * 
- * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
+ * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom;
  * the contents of this file may not be disclosed to third parties, copied
  * or duplicated in any form, in whole or in part, without the prior
- * written permission of Broadcom Corporation.
+ * written permission of Broadcom.
  *
  *
  * <<Broadcom-WL-IPTag/Proprietary:>>
  *
- * $Id: bcmulb.h 540218 2015-03-11 09:04:10Z $
+ * $Id: bcmulb.h 596466 2015-11-02 00:41:50Z $
  */
 #ifndef _BCMULB_H_
 #define _BCMULB_H_
@@ -51,12 +51,14 @@
 #define MIN_ULB_BRCM_PROP_IE_LEN	(ULB_BRCM_PROP_IE_OUI_OVRHD + ULB_CAP_ATTR_LEN)
 #define ULB_MODE_SW_REQ_AF_LEN		sizeof(ulb_mode_sw_req_t)
 #define ULB_MODE_SW_RSP_AF_LEN		sizeof(ulb_mode_sw_rsp_t)
+#define ULB_DYN_FRAG_AF_SIZE		sizeof(ulb_dyn_frag_req_t)
 
 /* Action frame type for ULB */
 #define BRCM_ULB_AF_TYPE		15
 enum {
 	BRCM_ULB_SWITCH_REQ_SUBTYPE = 1,	/* ULB Mode Switch Request */
-	BRCM_ULB_SWITCH_RSP_SUBTYPE = 2		/* ULB Mode Switch Response */
+	BRCM_ULB_SWITCH_RSP_SUBTYPE = 2,	/* ULB Mode Switch Response */
+	BRCM_ULB_DYN_FRAG_SUBTYPE   = 3,	/* ULB Mode DynFrag Request */
 };
 
 /* ULB Mode Switch Status Code - Used in sending ULB Mode Switch Response Action Frame */
@@ -132,6 +134,17 @@ BWL_PRE_PACKED_STRUCT struct ulb_mode_sw_rsp {
 	ulb_opr_field_t	opr_field;	/* ULB Operations Field */
 } BWL_POST_PACKED_STRUCT;
 typedef struct ulb_mode_sw_rsp ulb_mode_sw_rsp_t;
+
+/* ULB Action Frame */
+/* ULB Dynamic fragmentation Action Frame Format */
+BWL_PRE_PACKED_STRUCT struct ulb_dyn_frag_req {
+	uint8	category;		/* DOT11_ACTION_CAT_VS */
+	uint8	OUI[3];			/* OUI - BRCM_PROP_OUI */
+	uint8	type;			/* Action VS Type - BRCM_ULB_AF_TYPE */
+	uint8	subtype;		/* Action VS Subtype - BRCM_ULB_DYN_FRAG_SUBTYPE */
+	uint32  bt_tasks;		/* Bt  task types */
+} BWL_POST_PACKED_STRUCT;
+typedef struct ulb_dyn_frag_req ulb_dyn_frag_req_t;
 
 /* This marks the end of a packed structure section. */
 #include <packed_section_end.h>

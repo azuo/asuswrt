@@ -395,6 +395,7 @@ static int pppol2tp_xmit(struct ppp_channel *chan, struct sk_buff *skb)
 	struct pppol2tp_session *ps;
 	int old_headroom;
 	int new_headroom;
+	int uhlen, headroom;
 
 	if (sock_flag(sk, SOCK_DEAD) || !(sk->sk_state & PPPOX_CONNECTED))
 		goto abort;
@@ -413,7 +414,13 @@ static int pppol2tp_xmit(struct ppp_channel *chan, struct sk_buff *skb)
 		goto abort_put_sess;
 
 	old_headroom = skb_headroom(skb);
-	if (skb_cow_head(skb, sizeof(ppph)))
+	uhlen = (tunnel->encap == L2TP_ENCAPTYPE_UDP) ? sizeof(struct udphdr) : 0;
+	headroom = NET_SKB_PAD +
+		   sizeof(struct iphdr) + /* IP header */
+		   uhlen +		/* UDP header (if L2TP_ENCAPTYPE_UDP) */
+		   session->hdr_len +	/* L2TP header */
+		   sizeof(ppph);	/* PPP header */
+	if (skb_cow_head(skb, headroom))
 		goto abort_put_sess_tun;
 
 	new_headroom = skb_headroom(skb);
@@ -779,9 +786,9 @@ static int pppol2tp_connect(struct socket *sock, struct sockaddr *uservaddr,
 	session->deref = pppol2tp_session_sock_put;
 
 	/* If PMTU discovery was enabled, use the MTU that was discovered */
-	dst = sk_dst_get(sk);
+	dst = sk_dst_get(tunnel->sock);
 	if (dst != NULL) {
-		u32 pmtu = dst_mtu(__sk_dst_get(sk));
+		u32 pmtu = dst_mtu(dst);
 		if (pmtu != 0)
 			session->mtu = session->mru = pmtu -
 				PPPOL2TP_HEADER_OVERHEAD;
@@ -931,7 +938,7 @@ static int pppol2tp_getname(struct socket *sock, struct sockaddr *uaddr,
 		goto end_put_sess;
 	}
 
-	inet = inet_sk(sk);
+	inet = inet_sk(tunnel->sock);
 	if (tunnel->version == 2) {
 		struct sockaddr_pppol2tp sp;
 		len = sizeof(sp);

@@ -85,8 +85,8 @@ extern spinlock_t bcm947xx_sih_lock;
 
 extern int _memsize;
 
-#define PCI_MAX_BUS		4
-#define PLX_PRIM_SEC_BUS_NUM		(0x00000201 | (PCI_MAX_BUS << 16))
+#define NS_PCI_MAX_BUS		4
+#define PLX_PRIM_SEC_BUS_NUM		(0x00000201 | (NS_PCI_MAX_BUS << 16))
 
 #define PLX_SWITCH_ID		0x8603
 #define PLX_PCIE_CAP_REG_BASE	0x68		/* PLX Capability Register base */
@@ -478,7 +478,7 @@ static void pcie_switch_retrain_link(struct pci_bus *bus, unsigned int devfn)
 {
 	struct soc_pcie_port *port = soc_pcie_bus2port(bus);
 	u16 pos = PLX_PCIE_CAP_REG_BASE;
-	u16 tmp16;
+	u32 tmp32;
 	int wait = 0;
 
 	if (port->switch_id == ASMEDIA_SWITCH_ID) {
@@ -490,18 +490,18 @@ static void pcie_switch_retrain_link(struct pci_bus *bus, unsigned int devfn)
 #endif
 
 	/* Retrain link via Link Control Reg */
-	soc_pci_read_config(bus, devfn, pos + PCI_EXP_LNKCTL, 2, &tmp16);
-	tmp16 |= PCI_EXP_LNKCTL_RL;
-	soc_pci_write_config(bus, devfn, pos + PCI_EXP_LNKCTL, 2, tmp16);
+	soc_pci_read_config(bus, devfn, pos + PCI_EXP_LNKCTL, 2, &tmp32);
+	tmp32 |= PCI_EXP_LNKCTL_RL;
+	soc_pci_write_config(bus, devfn, pos + PCI_EXP_LNKCTL, 2, tmp32);
 	/* Wait for link training via Link Status reg */
 	do {
-		soc_pci_read_config(bus, devfn, pos + PCI_EXP_LNKSTA, 2, &tmp16);
-		if (!(tmp16 & PCI_EXP_LNKSTA_LT))
+		soc_pci_read_config(bus, devfn, pos + PCI_EXP_LNKSTA, 2, &tmp32);
+		if (!(tmp32 & PCI_EXP_LNKSTA_LT))
 			break;
 		mdelay(100);
 	} while (wait++ < 10);
 
-	if (tmp16 & PCI_EXP_LNKSTA_LT)
+	if (tmp32 & PCI_EXP_LNKSTA_LT)
 		pr_info("PCIE: Retrain link failed\n");
 }
 
@@ -509,7 +509,7 @@ static void plx_pcie_switch_init(struct pci_bus *bus, unsigned int devfn)
 {
 	struct soc_pcie_port *port = soc_pcie_bus2port(bus);
 	u32 dRead = 0;
-	u16 bm = 0;
+	u32 bm = 0;
 	int bus_inc = 0;
 	u16 pos = PLX_PCIE_CAP_REG_BASE;
 
@@ -537,13 +537,13 @@ static void plx_pcie_switch_init(struct pci_bus *bus, unsigned int devfn)
 	soc_pci_write_config(bus, devfn, 0x62c, 4, dRead);
 
 	soc_pci_read_config(bus, devfn, 0x4, 2, &bm);
-#if NS_PCI_DEBUG
+#ifdef NS_PCI_DEBUG
 	printk("bus master: %08x\n", bm);
 #endif
 	bm |= 0x06;
 	soc_pci_write_config(bus, devfn, 0x4, 2, bm);
 	bm = 0;
-#if NS_PCI_DEBUG
+#ifdef NS_PCI_DEBUG
 	soc_pci_read_config(bus, devfn, 0x4, 2, &bm);
 	printk("bus master after: %08x\n", bm);
 	bm = 0;
@@ -569,6 +569,12 @@ static void plx_pcie_switch_init(struct pci_bus *bus, unsigned int devfn)
 		printk("PCIE %04x:%02x:%04x: PLX UpPort mem_base 0x%08x, mem_limit 0x%08x\n",
 				port->hw_pci.domain, bus->number, devfn,
 				port->owin_res->start, port->owin_res->start + SZ_32M - 1);
+
+		/* Set 0dB de-emphasis on PEX8603 UpPort to improve TX signal */
+		printk("PCIE: Setting PEX8603 UpPort to 0dB de-emphasis.\n");
+		soc_pci_read_config(bus, devfn, 0xb80, 4, &dRead);
+		dRead |= (1 << 20);
+		soc_pci_write_config(bus, devfn, 0xb80, 4, dRead);
 	} else if (bus->number == (bus_inc + 2)) {
 		/* TODO: I need to fix these hard coded addresses. */
 		if (devfn == 0x8) {
@@ -645,22 +651,22 @@ asmedia_pcie_switch_init(struct pci_bus *bus, unsigned int devfn)
 {
 	struct soc_pcie_port *port = soc_pcie_bus2port(bus);
 	u32 dRead = 0;
-	u16 bm = 0;
+	u32 bm = 0;
 	int bus_inc = 0;
 	u16 pos = ASMEDIA_PCIE_CAP_REG_BASE;
-	u16 tmp16;
+	u32 tmp32;
 
 	soc_pci_read_config(bus, devfn, 0x100, 4, &dRead);
 	printk("PCIE: Doing ASMedia switch Init...Test Read = %08x\n", (unsigned int)dRead);
 
 	soc_pci_read_config(bus, devfn, 0x4, 2, &bm);
-#if NS_PCI_DEBUG
+#ifdef NS_PCI_DEBUG
 	printk("bus master: %08x\n", bm);
 #endif
 	bm |= 0x06;
 	soc_pci_write_config(bus, devfn, 0x4, 2, bm);
 	bm = 0;
-#if NS_PCI_DEBUG
+#ifdef NS_PCI_DEBUG
 	soc_pci_read_config(bus, devfn, 0x4, 2, &bm);
 	printk("bus master after: %08x\n", bm);
 	bm = 0;
@@ -671,7 +677,7 @@ asmedia_pcie_switch_init(struct pci_bus *bus, unsigned int devfn)
 	 */
 	if (bus->number == (bus_inc + 1)) {
 		/* Upstream port */
-		soc_pci_write_config(bus, devfn, 0x18, 4, (0x00000201 | (PCI_MAX_BUS << 16)));
+		soc_pci_write_config(bus, devfn, 0x18, 4, (0x00000201 | (NS_PCI_MAX_BUS << 16)));
 
 		/* MEM_BASE, MEM_LIM require 1MB alignment */
 		BUG_ON((port->owin_res->start >> 16) & 0xf);
@@ -708,10 +714,10 @@ asmedia_pcie_switch_init(struct pci_bus *bus, unsigned int devfn)
 				port->owin_res->start + SZ_48M, port->owin_res->start + SZ_48M + SZ_32M - 1);
 
 			/* Set link speed via Link Control2 reg */
-			soc_pci_read_config(bus, devfn, pos + PCI_EXP_LNKCTL2, 2, &tmp16);
-			tmp16 &= ~0xf;
-			tmp16 |= 2; /* GEN2 */
-			soc_pci_write_config(bus, devfn, pos + PCI_EXP_LNKCTL2, 2, tmp16);
+			soc_pci_read_config(bus, devfn, pos + PCI_EXP_LNKCTL2, 2, &tmp32);
+			tmp32 &= ~0xf;
+			tmp32 |= 2; /* GEN2 */
+			soc_pci_write_config(bus, devfn, pos + PCI_EXP_LNKCTL2, 2, tmp32);
 
 			/* Retrain Link */
 			pcie_switch_retrain_link(bus, devfn);
@@ -747,10 +753,10 @@ asmedia_pcie_switch_init(struct pci_bus *bus, unsigned int devfn)
 				port->owin_res->start + (SZ_48M * 2) + SZ_32M - 1);
 
 			/* Set link speed via Link Control2 reg */
-			soc_pci_read_config(bus, devfn, pos + PCI_EXP_LNKCTL2, 2, &tmp16);
-			tmp16 &= ~0xf;
-			tmp16 |= 2; /* GEN2 */
-			soc_pci_write_config(bus, devfn, pos + PCI_EXP_LNKCTL2, 2, tmp16);
+			soc_pci_read_config(bus, devfn, pos + PCI_EXP_LNKCTL2, 2, &tmp32);
+			tmp32 &= ~0xf;
+			tmp32 |= 2; /* GEN2 */
+			soc_pci_write_config(bus, devfn, pos + PCI_EXP_LNKCTL2, 2, tmp32);
 
 			/* Retrain Link */
 			pcie_switch_retrain_link(bus, devfn);
@@ -1012,6 +1018,7 @@ static void __init soc_pcie_hw_init(struct soc_pcie_port *port)
 {
 	u32 devfn = 0;
 	u32 tmp32;
+	u16 tmp16;
 	struct pci_sys_data sd = {
 		.domain = port->hw_pci.domain,
 	};
@@ -1022,10 +1029,10 @@ static void __init soc_pcie_hw_init(struct soc_pcie_port *port)
 	};
 
 	/* Change MPS and MRRS to 512 */
-	pci_bus_read_config_word(&bus, devfn, 0x4d4, &tmp32);
-	tmp32 &= ~7;
-	tmp32 |= 2;
-	pci_bus_write_config_word(&bus, devfn, 0x4d4, tmp32);
+	pci_bus_read_config_word(&bus, devfn, 0x4d4, &tmp16);
+	tmp16 &= ~7;
+	tmp16 |= 2;
+	pci_bus_write_config_word(&bus, devfn, 0x4d4, tmp16);
 
 	pci_bus_read_config_dword(&bus, devfn, 0xb4, &tmp32);
 	tmp32 &= ~((7 << 12) | (7 << 5));
@@ -1260,6 +1267,20 @@ bcm5301x_usb_power_on(int coreid)
 
 			si_gpioout(sih, enable_usb_mask, enable_usb_mask, GPIO_DRV_PRIORITY);
 			si_gpioouten(sih, enable_usb_mask, enable_usb_mask, GPIO_DRV_PRIORITY);
+		}
+
+		enable_usb = getgpiopin(NULL, "usbhub_reset", GPIO_PIN_NOTDEFINED);
+		if (enable_usb != GPIO_PIN_NOTDEFINED) {
+			int enable_hub_mask = 1 << enable_usb;
+
+			/* Keep RESET low for 2 us */
+			si_gpioout(sih, enable_hub_mask, 0, GPIO_DRV_PRIORITY);
+			si_gpioouten(sih, enable_hub_mask, enable_hub_mask, GPIO_DRV_PRIORITY);
+			OSL_DELAY(2);
+
+			/* Keep RESET high for at least 2 us */
+			si_gpioout(sih, enable_hub_mask, enable_hub_mask, GPIO_DRV_PRIORITY);
+			OSL_DELAY(2);
 		}
 	}
 	else if (coreid == NS_USB30_CORE_ID) {
@@ -1674,7 +1695,7 @@ bcm5301x_usb_hc_init(struct pci_dev *dev, int coreid, int corerev)
 			REG_UNMAP(pmu_base);
 		}
 	}
-out:
+
 	REG_UNMAP(ehci_base);
 }
 
@@ -1873,6 +1894,60 @@ out:
 }
 
 static void __init
+bcm5301x_pcie_pll_init(void)
+{
+	uint32 pmu_base, chipcommon_base;
+	uint32 *pmu_control, *pmu_ctrl_addr, *pmu_ctrl_data;
+	uint32 *chipcommon_chipsts;
+	uint32 i, val;
+
+	/* Check chip ID */
+	if (!BCM53573_CHIP(CHIPID(sih->chip)))
+		return;
+
+	pmu_base = (uint32)REG_MAP(0x18012000, 4096);
+	pmu_control = (uint32 *)(pmu_base + 0x600);
+	pmu_ctrl_addr = (uint32 *)(pmu_base + 0x660);
+	pmu_ctrl_data = (uint32 *)(pmu_base + 0x664);
+
+	/* Enable access PLL Control Register 31 */
+	writel(31, pmu_ctrl_addr);
+
+	/* Disable PCIE PLL channel first by setting bit[5] */
+	val = readl(pmu_ctrl_data);
+	val |= (1 << 5);
+	writel(val, pmu_ctrl_data);
+
+	/* Update new value for tx jitter improvement and enable it */
+	writel(0x14221600, pmu_ctrl_data);
+
+	/* Enable bit[10] of PMUCONTROL register to make it take effect */
+	val = readl(pmu_control);
+	val |= (1 << 10);
+	writel(val, pmu_control);
+
+	/* Check bit[3] of CC chipstatus register for PCIE PLL lock */
+	chipcommon_base = (uint32)REG_MAP(0x18000000, 4096);
+	chipcommon_chipsts = (uint32 *)(chipcommon_base + 0x2c);
+
+	for (i = 0; i < 50; i++) {
+		val = readl(chipcommon_chipsts);
+		if (val & (1 << 3))
+			break;
+		mdelay(1);
+	}
+
+	if (i < 50) {
+		printk(KERN_INFO "PCIE PLL is locked\n");
+	} else {
+		printk(KERN_WARNING "Failed to lock PCIE PLL\n");
+	}
+
+	REG_UNMAP((void *)chipcommon_base);
+	REG_UNMAP((void *)pmu_base);
+}
+
+static void __init
 bcm5301x_pcie_phy_init(void)
 {
 	uint32 ccb_mii_base;
@@ -1908,7 +1983,8 @@ bcm5301x_pcie_phy_init(void)
 				break;
 		}
 
-		/* Change blkaddr */
+		/* Change blkaddr to 0x863 */
+		blkaddr = 0x863;
 		SPINWAIT(((readl(ccb_mii_mng_ctrl_addr) >> 8 & 1) == 1), 1000);
 		val = (sb << 30) | (op_w << 28) | (pa[i] << 23) | (blkra << 18) |
 			(ta << 16) | (blkaddr << 4);
@@ -1926,6 +2002,52 @@ bcm5301x_pcie_phy_init(void)
 		regaddr = 0x19;
 		val = (sb << 30) | (op_w << 28) | (pa[i] << 23) | (regaddr << 18) |
 			(ta << 16) | 0x0191;
+		writel(val, ccb_mii_mng_cmd_data_addr);
+
+		/* Set 0dB pre-emphasis in TxBlock 0x820 to improve TX signal */
+		uint32 op_r = 2, tmp_val;
+		blkaddr = 0x820;
+
+		/* Change blkaddr to 0x820 */
+		SPINWAIT(((readl(ccb_mii_mng_ctrl_addr) >> 8 & 1) == 1), 1000);
+		val = (sb << 30) | (op_w << 28) | (pa[i] << 23) | (blkra << 18) |
+			(ta << 16) | (blkaddr << 4);
+		writel(val, ccb_mii_mng_cmd_data_addr);
+
+		/* Read 0x18 regaddr for GEN1 */
+		SPINWAIT((((readl(ccb_mii_mng_ctrl_addr) >> 8) & 1) == 1), 1000);
+		regaddr = 0x18;
+		val = (sb << 30) | (op_r << 28) | (pa[i] << 23) | (regaddr << 18) |
+			(ta << 16) | 0x0;
+		writel(val, ccb_mii_mng_cmd_data_addr);
+
+		SPINWAIT((((readl(ccb_mii_mng_ctrl_addr) >> 8) & 1) == 1), 1000);
+		tmp_val = readl(ccb_mii_mng_cmd_data_addr);
+
+		/* Set GEN1 0dB pre-emphasis */
+		SPINWAIT(((readl(ccb_mii_mng_ctrl_addr) >> 8 & 1) == 1), 1000);
+		regaddr = 0x18;
+		tmp_val &= ~(0xf << 4);
+		val = (sb << 30) | (op_w << 28) | (pa[i] << 23) | (regaddr << 18) |
+			(ta << 16) | tmp_val;
+		writel(val, ccb_mii_mng_cmd_data_addr);
+
+		/* Read 0x17 regaddr for GEN2 */
+		SPINWAIT((((readl(ccb_mii_mng_ctrl_addr) >> 8) & 1) == 1), 1000);
+		regaddr = 0x17;
+		val = (sb << 30) | (op_r << 28) | (pa[i] << 23) | (regaddr << 18) |
+			(ta << 16) | 0x0;
+		writel(val, ccb_mii_mng_cmd_data_addr);
+
+		SPINWAIT((((readl(ccb_mii_mng_ctrl_addr) >> 8) & 1) == 1), 1000);
+		tmp_val = readl(ccb_mii_mng_cmd_data_addr);
+
+		/* Set GEN2 0dB pre-emphasis */
+		SPINWAIT(((readl(ccb_mii_mng_ctrl_addr) >> 8 & 1) == 1), 1000);
+		regaddr = 0x17;
+		tmp_val &= ~(0xf << 8);
+		val = (sb << 30) | (op_w << 28) | (pa[i] << 23) | (regaddr << 18) |
+			(ta << 16) | tmp_val;
 		writel(val, ccb_mii_mng_cmd_data_addr);
 	}
 
@@ -2033,6 +2155,8 @@ static int __init soc_pcie_init(void)
 
 		pcie_port = &bcm53573_pcie_ports[0];
 		pcie_ports_sz = ARRAY_SIZE(bcm53573_pcie_ports);
+
+		bcm5301x_pcie_pll_init();
 	}
 #define ASUS_SWITCH_INTF 1
 #ifdef ASUS_SWITCH_INTF

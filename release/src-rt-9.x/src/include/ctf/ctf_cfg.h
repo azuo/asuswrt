@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2016, Broadcom. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -34,6 +34,7 @@
 #define CTFCFG_CMD_DEFAULT_FWD_SET  5
 #define CTFCFG_CMD_UPD_MARK	    6
 #define CTFCFG_CMD_CHANGE_TXIF_TO_BR	7
+#define CTFCFG_CMD_IPC_CLEANUP	8
 
 #define CTFCFG_STATUS_SUCCESS			1
 #define CTFCFG_STATUS_FAILURE			2
@@ -60,6 +61,8 @@ typedef struct
 	uint16_t dst_port;
 
 	uint8_t protocol;
+
+	uint16_t sid;
 } ctf_tuple_t;
 
 typedef enum {

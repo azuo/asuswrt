@@ -3,13 +3,13 @@
  * Trimmed version of reference code from "Simple Security Network (SSN) for
  * IEEE 802.11", v0.20, plus test routine.
  *
- * Copyright (C) 2015, Broadcom Corporation
+ * Broadcom Proprietary and Confidential. Copyright (C) 2016,
  * All Rights Reserved.
  * 
- * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
+ * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom;
  * the contents of this file may not be disclosed to third parties, copied
  * or duplicated in any form, in whole or in part, without the prior
- * written permission of Broadcom Corporation.
+ * written permission of Broadcom.
  *
  * $Id: tkhash.c 451682 2014-01-27 20:30:17Z $
  */

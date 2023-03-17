@@ -34,6 +34,8 @@ config BCM_FA
 config BCM_GMAC3
 	bool "BCM 3 GMAC Forwarding support"
 	depends on BCM_CTF
+config BCM_DHDHDR
+	bool "BCM DHD Host Memory for Tx and SubFrame Headers support"
 config WL_EMULATOR
 	bool "WL emulation using Gigabit ethernet"
 	depends on HND

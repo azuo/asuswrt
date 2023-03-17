@@ -1,18 +1,18 @@
 /*
  * Inband EAP
  *
- * Copyright (C) 2015, Broadcom Corporation
+ * Broadcom Proprietary and Confidential. Copyright (C) 2016,
  * All Rights Reserved.
  * 
- * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
+ * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom;
  * the contents of this file may not be disclosed to third parties, copied
  * or duplicated in any form, in whole or in part, without the prior
- * written permission of Broadcom Corporation.
+ * written permission of Broadcom.
  *
  *
  * <<Broadcom-WL-IPTag/Proprietary:>>
  *
- * $Id: ap_eap_sm.h 525052 2015-01-08 20:18:35Z $
+ * $Id: ap_eap_sm.h 655917 2016-08-24 07:50:36Z $
  */
 
 #ifndef _AP_EAP_SM_H_
@@ -62,6 +62,7 @@ typedef struct {
 	char * (*parse_msg)(char *, int, int *);
 	unsigned int (*send_data)(char *, uint32);
 	int eap_frag_threshold;
+	int wps_delay_deauth_ms;
 } EAP_WPS_AP_STATE;
 
 #define AP_EAP_SM_AP_M2D_READY	0x1
@@ -72,7 +73,7 @@ int ap_eap_sm_process_timeout();
 int ap_eap_sm_startWPSReg(unsigned char *sta_mac, unsigned char *ap_mac);
 uint32 ap_eap_sm_process_sta_msg(char *msg, int msg_len);
 uint32 ap_eap_sm_init(void *mc_dev, char *mac_sta, char * (*parse_msg)(char *, int, int *),
-	unsigned int (*send_data)(char *, uint32), int eap_frag_threshold);
+	unsigned int (*send_data)(char *, uint32), int eap_frag_threshold, int wps_delay_deauth_ms);
 uint32 ap_eap_sm_deinit(void);
 uint32 ap_eap_sm_sendMsg(char * dataBuffer, uint32 dataLen);
 uint32 ap_eap_sm_sendWPSStart(void);

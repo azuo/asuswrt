@@ -1,7 +1,7 @@
 #
 # Makefile for the Broadcom wl driver
 #
-# Copyright (C) 2015, Broadcom Corporation. All Rights Reserved.
+# Copyright (C) 2016, Broadcom. All Rights Reserved.
 # 
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -66,5 +66,8 @@ wlsubdirs := $(addprefix wl_,$(foreach v,$(VLIST),$(shell echo "$(v)" | tr A-Z a
 #subdir-y += $(wlsubdirs)
 #subdir-m += $(wlsubdirs)
 
+ifneq ($(wlsubdirs),)
 .NOTPARALLEL:
+endif
+
 include $(src)/wl_generic.mk

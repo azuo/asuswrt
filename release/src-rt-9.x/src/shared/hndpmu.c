@@ -2,7 +2,7 @@
  * Misc utility routines for accessing PMU corerev specific features
  * of the SiliconBackplane-based Broadcom chips.
  *
- * Copyright (C) 2015, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2016, Broadcom. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -3102,7 +3102,6 @@ si_pmu_res_masks(si_t *sih, uint32 *pmin, uint32 *pmax)
 	case BCM43569_CHIP_ID:
 	case BCM43570_CHIP_ID:
 	case BCM4358_CHIP_ID:
-		/* JIRA: SWWLAN-27486 Power consumption optimization when wireless is down */
 #ifndef BCM_BOOTLOADER
 		if (CST4350_IFC_MODE(sih->chipst) == CST4350_IFC_MODE_PCIE) {
 			int L1substate = si_pcie_get_L1substate(sih);
@@ -9646,11 +9645,9 @@ BCMATTACHFN(si_pmu_chip_init)(si_t *sih, osl_t *osh)
 		{
 		uint32 val;
 		if (CST4349_CHIPMODE_PCIE(sih->chipst)) {
-			/* JIRA: SWWLAN-27305 initialize 4349 pmu control registers */
 			si_pmu_chipcontrol(sih, PMU_CHIPCTL1,
 				PMU_CC1_ENABLE_BBPLL_PWR_DOWN, PMU_CC1_ENABLE_BBPLL_PWR_DOWN);
 
-			/* JIRA: SWWLAN-27486 optimize power consumption when wireless is down */
 			if (sih->chiprev == 0) { /* 4349A0 */
 				val = PMU_CC2_FORCE_SUBCORE_PWR_SWITCH_ON |
 				  PMU_CC2_FORCE_PHY_PWR_SWITCH_ON |
@@ -9733,16 +9730,13 @@ BCMATTACHFN(si_pmu_chip_init)(si_t *sih, osl_t *osh)
 		uint32 val;
 
 		if (CST4350_IFC_MODE(sih->chipst) == CST4350_IFC_MODE_PCIE) {
-			/* JIRA: SWWLAN-27305 initialize 4350 pmu control registers */
 			si_pmu_chipcontrol(sih, PMU_CHIPCTL1,
 				PMU_CC1_ENABLE_BBPLL_PWR_DOWN, PMU_CC1_ENABLE_BBPLL_PWR_DOWN);
 			si_pmu_regcontrol(sih, 0, ~0, 1);
 
-			/* JIRA:SWWLAN-36186; HW4345-889 */
 			si_pmu_chipcontrol(sih, PMU_CHIPCTL5, CC5_4350_PMU_EN_ASSERT_MASK,
 				CC5_4350_PMU_EN_ASSERT_MASK);
 
-			/* JIRA: SWWLAN-27486 optimize power consumption when wireless is down */
 			if ((CHIPID(sih->chip) == BCM4350_CHIP_ID) &&
 				(sih->chiprev == 0)) { /* 4350A0 */
 				val = PMU_CC2_FORCE_SUBCORE_PWR_SWITCH_ON |

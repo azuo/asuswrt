@@ -1,11 +1,11 @@
 #
-# Copyright (C) 2015, Broadcom Corporation
+# Broadcom Proprietary and Confidential. Copyright (C) 2016,
 # All Rights Reserved.
 # 
-# This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
+# This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom;
 # the contents of this file may not be disclosed to third parties, copied
 # or duplicated in any form, in whole or in part, without the prior
-# written permission of Broadcom Corporation.
+# written permission of Broadcom.
 #
 # $Id: wps_common_lib.mk 403251 2013-05-20 05:15:55Z $
 #
@@ -22,8 +22,8 @@ ifeq ($(BLDTYPE),debug)
 export CFLAGS = -Wall -Wnested-externs -g -D_TUDEBUGTRACE
 export CXXFLAGS = -Wall -Wnested-externs -g -D_TUDEBUGTRACE
 else
-export CFLAGS = -Os -Wall -Wnested-externs
-export CXXFLAGS = -Os -Wall -Wnested-externs
+export CFLAGS = -Wall -Wnested-externs
+export CXXFLAGS = -Wall -Wnested-externs
 endif
 
 ifdef WCN_NET_SUPPORT

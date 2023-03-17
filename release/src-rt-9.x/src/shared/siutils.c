@@ -2,7 +2,7 @@
  * Misc utility routines for accessing chip-specific features
  * of the SiliconBackplane-based Broadcom chips.
  *
- * Copyright (C) 2015, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2016, Broadcom. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: siutils.c 583124 2015-09-01 01:30:34Z $
+ * $Id: siutils.c 590611 2015-10-05 13:39:48Z $
  */
 
 #include <bcm_cfg.h>
@@ -2431,10 +2431,6 @@ BCMATTACHFN(si_doattach)(si_info_t *sii, uint devid, osl_t *osh, void *regs,
 	}
 #endif /* (!_CFE_ && !_CFEZ_) || CFG_WL */
 
-	if (CHIPID(sih->chip) == BCM47452_CHIP_ID) {
-		sih->chip = BCM53574_CHIP_ID;
-	}
-
 	if ((CHIPID(sih->chip) == BCM4329_CHIP_ID) && (sih->chiprev == 0) &&
 		(sih->chippkg != BCM4329_289PIN_PKG_ID)) {
 		sih->chippkg = BCM4329_182PIN_PKG_ID;
@@ -3878,7 +3874,7 @@ si_watchdog(si_t *sih, uint ticks)
 	uint nb, maxt;
 	uint pmu_wdt = 1;
 
-	if (CHIPID(sih->chip) == BCM53573_CHIP_ID) {
+	if (BCM53573_CHIP(sih->chip)) {
 		/* 53573 A0/A1 use GPIO to toggle reset IC to reboot system */
 		if (CHIPREV(sih->chiprev) <= 1) {
 			int reset_gpio = getgpiopin(NULL, "watchdog_reset_gpio",

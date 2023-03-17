@@ -1397,6 +1397,28 @@ set_col_53573:
 	str	r1,[r9,#DDRC_CONTROL60]
 
 set_tref_53573:
+	ldr	r2,=0x10000000
+	and	r2,r6,r2
+	cmp	r2,#0
+	beq	set_trfc_53573
+	ldr	r1,[r9,#DDRC_CONTROL26]		@ half tref cycle
+	ldr	r3,=0x3fff
+	and	r2,r1,r3
+	bic	r1,r1,r3
+	lsr	r2,r2,#1
+	sub	r3,r2,#3
+	add	r1,r1,r3
+	str	r1,[r9,#DDRC_CONTROL26]
+set_trfc_53573:
+	ldr	r2,=0x3ff0000
+	and	r2,r6,r2
+	cmp	r2,#0
+	beq	start_ddr_53573
+	ldr	r1,[r9,#DDRC_CONTROL25]
+	ldr	r3,=0x3ff0000
+	bic	r1,r1,r3
+	add	r1,r1,r2
+	str	r1,[r9,#DDRC_CONTROL25]		@ add counts to trfc
 
 start_ddr_53573:
 	ldr	r1,[r9,#DDRC_CONTROL00]
@@ -1462,7 +1484,7 @@ ddr_init_tab_53573:
 	.word	57,	0x01000200
 	.word	58,	0x02000040
 	.word	59,	0x00000040
-	.word	60,	0x01030000
+	.word	60,	0x01000000
 	.word	61,	0x01ffff0a
 	.word	62,	0x01010101
 	.word	63,	0x03010101
@@ -2069,7 +2091,7 @@ ddr3_358_init_tab_53573:
 	.word	32,	0x002b0200
 	.word	35,	0x05050500
 	.word	47,	0x00042000
-	.word	48,	0x00000046
+	.word	48,	0x00000044
 	.word	78,	0x04000000
 	.word	109,	0x020015b2
 	.word	111,	0x15b20200
@@ -2101,7 +2123,7 @@ ddr3_392_init_tab_53573:
 	.word	32,	0x002f0200
 	.word	35,	0x05050500
 	.word	47,	0x00042000
-	.word	48,	0x00000046
+	.word	48,	0x00000044
 	.word	78,	0x04000000
 	.word	109,	0x020017bc
 	.word	111,	0x17bc0200
@@ -2131,7 +2153,7 @@ ddr3_533_init_tab_53573:
 	.word	29,	0x000a000d
 	.word	32,	0x00400200
 	.word	35,	0x05060600
-	.word	48,	0x00080046
+	.word	48,	0x00080044
 	.word	78,	0x05000000
 	.word	109,	0x02002058
 	.word	111,	0x20580200

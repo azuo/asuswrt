@@ -1,18 +1,18 @@
 /*
  * EAP defines
  *
- * Copyright (C) 2015, Broadcom Corporation
+ * Broadcom Proprietary and Confidential. Copyright (C) 2016,
  * All Rights Reserved.
  * 
- * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
+ * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom;
  * the contents of this file may not be disclosed to third parties, copied
  * or duplicated in any form, in whole or in part, without the prior
- * written permission of Broadcom Corporation.
+ * written permission of Broadcom.
  *
  *
  * <<Broadcom-WL-IPTag/Proprietary:>>
  *
- * $Id: eap_defs.h 525052 2015-01-08 20:18:35Z $
+ * $Id: eap_defs.h 655917 2016-08-24 07:50:36Z $
  */
 
 #ifndef EAP_DEFS_H
@@ -86,6 +86,7 @@ typedef enum {
 #define EAP_WPS_FRAG_MAX	1398
 #define EAP_WPS_FLAGS_MF	0x01	/* More fragmentation */
 #define EAP_WPS_FLAGS_LF	0x02	/* Length information, this is WPS data total length */
+#define EAP_WPS_DEALY_DEAUTH_MS 10  /*default delay time for postpone deauth after EAP-FAIL */
 
 #define EAP_WPS_LF_OFFSET	2	/* 2 bytes of EAP_WPS_FLAGS_LF */
 

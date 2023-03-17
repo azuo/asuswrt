@@ -1124,9 +1124,17 @@ int xhci_endpoint_init(struct xhci_hcd *xhci,
 			version = xhci_readl(xhci, echrbv) >> 16;
 			if (((version == 0x1000) || (version == 0x1100)) &&
 				(xhci_get_endpoint_type(udev, ep) == EP_TYPE(BULK_OUT_EP))) {
-				max_packet = 0;
-				xhci_warn(xhci, "disable burst on ep %d\n",
-					usb_endpoint_num(&ep->desc));
+				/* not disable the burst OUT on Jmicron device (152d/2509/100) */
+				if (le16_to_cpu(udev->descriptor.idVendor) == 0x152d &&
+					le16_to_cpu(udev->descriptor.idProduct) == 0x2509 &&
+					le16_to_cpu(udev->descriptor.bcdDevice) == 0x100) {
+					xhci_warn(xhci, "not disable burst on ep %d\n",
+						usb_endpoint_num(&ep->desc));
+				} else {
+					max_packet = 0;
+					xhci_warn(xhci, "disable burst on ep %d\n",
+						usb_endpoint_num(&ep->desc));
+				}
 			}
 		} while (0);
 #endif /* CONFIG_BCM47XX */

@@ -1,7 +1,7 @@
 /*
  * Linux OS Independent Layer
  *
- * Copyright (C) 2015, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2016, Broadcom. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: linux_osl.c 526495 2015-01-14 10:16:48Z $
+ * $Id: linux_osl.c 661826 2016-09-27 12:34:53Z $
  */
 
 #define LINUX_PORT
@@ -1413,6 +1413,13 @@ osl_dma_unmap(osl_t *osh, uint pa, uint size, int direction)
 	pci_unmap_single(osh->pdev, (uint32)pa, size, dir);
 }
 
+/* OSL function for CPU relax */
+inline void BCMFASTPATH
+osl_cpu_relax(void)
+{
+	cpu_relax();
+}
+
 #if defined(mips)
 inline void BCMFASTPATH
 osl_cache_flush(void *va, uint size)
@@ -1449,7 +1456,7 @@ inline void BCMFASTPATH
 osl_cache_flush(void *va, uint size)
 {
 
-#ifdef BCM47XX_CA9
+#if defined(BCM47XX_CA9) && !defined(DHDAP)
 	if (ACP_WAR_ENAB() && (virt_to_phys(va) < ACP_WIN_LIMIT))
 		return;
 #endif /* BCM47XX_CA9 */
@@ -1461,7 +1468,7 @@ inline void BCMFASTPATH
 osl_cache_inv(void *va, uint size)
 {
 
-#ifdef BCM47XX_CA9
+#if defined(BCM47XX_CA9) && !defined(DHDAP)
 	if (ACP_WAR_ENAB() && (virt_to_phys(va) < ACP_WIN_LIMIT))
 		return;
 #endif /* BCM47XX_CA9 */
@@ -1604,6 +1611,65 @@ osl_pktdup(osl_t *osh, void *skb)
 #else
 	if ((p = skb_clone((struct sk_buff *)skb, GFP_ATOMIC)) == NULL)
 #endif
+		return NULL;
+
+#ifdef CTFPOOL
+	if (PKTISFAST(osh, skb)) {
+		ctfpool_t *ctfpool;
+
+		/* if the buffer allocated from ctfpool is cloned then
+		 * we can't be sure when it will be freed. since there
+		 * is a chance that we will be losing a buffer
+		 * from our pool, we increment the refill count for the
+		 * object to be alloced later.
+		 */
+		ctfpool = (ctfpool_t *)CTFPOOLPTR(osh, skb);
+		ASSERT(ctfpool != NULL);
+		PKTCLRFAST(osh, p);
+		PKTCLRFAST(osh, skb);
+		ctfpool->refills++;
+	}
+#endif /* CTFPOOL */
+
+	/* Clear PKTC  context */
+	PKTSETCLINK(p, NULL);
+	PKTCCLRFLAGS(p);
+	PKTCSETCNT(p, 1);
+	PKTCSETLEN(p, PKTLEN(osh, skb));
+
+	/* skb_clone copies skb->cb.. we don't want that */
+	if (osh->pub.pkttag)
+		OSL_PKTTAG_CLEAR(p);
+
+	/* Increment the packet counter */
+	atomic_inc(&osh->cmn->pktalloced);
+#ifdef BCMDBG_CTRACE
+	ADD_CTRACE(osh, (struct sk_buff *)p, file, line);
+#endif
+	return (p);
+}
+
+/* Copy a packet.
+ * The pkttag contents are NOT cloned.
+ */
+#ifdef BCMDBG_CTRACE
+void *
+osl_pktdup_cpy(osl_t *osh, void *skb, int line, char *file)
+#else
+void *
+osl_pktdup_cpy(osl_t *osh, void *skb)
+#endif /* BCMDBG_CTRACE */
+{
+	void * p;
+
+	ASSERT(!PKTISCHAINED(skb));
+
+	/* clear the CTFBUF flag if set and map the rest of the buffer
+	 * before cloning.
+	 */
+	PKTCTFMAP(osh, skb);
+
+	if ((p = pskb_copy((struct sk_buff *)skb, GFP_ATOMIC)) == NULL)
 		return NULL;
 
 #ifdef CTFPOOL

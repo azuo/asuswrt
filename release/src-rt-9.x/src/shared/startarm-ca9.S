@@ -1,7 +1,7 @@
 /*
  * BCM53XXX ARM/Cortext A9 boot code for standalone apps.
  *
- * Copyright (C) 2015, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2016, Broadcom. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -4714,6 +4714,7 @@ panic:	b	.
 
 ca9_ddr_init:
 	bl	ddr_init_ca9
+	ldr	r6,=CORTEX_ID_A9
 	b	szmem
 
 ca7_ddr_init:
@@ -4878,6 +4879,7 @@ ca7_cpu_set_ratio:
 	str	r1,[r0]
 
 ca7_cpu_boost_done:
+	ldr	r6,=CORTEX_ID_A7
 #endif  /* CFG_SHMOO */
 
 szmem:
@@ -4887,6 +4889,9 @@ szmem:
 	str	r1,[r3,#0x70]
 	ldr	r0,=(1 << 20)
 	ldr	r5,=(1 << 30)
+	ldr	r4,=CORTEX_ID_A7
+	cmp	r6,r4
+	ldreq	r5,=(1 << 29)			@ 53573 DDR boundary 512M
 1:
 	ldr	r4,=0x80000000
 	add	r4,r4,r0

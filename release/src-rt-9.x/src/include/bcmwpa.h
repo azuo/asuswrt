@@ -1,13 +1,13 @@
 /*
  * bcmwpa.h - interface definitions of shared WPA-related functions
  *
- * Copyright (C) 2015, Broadcom Corporation
+ * Broadcom Proprietary and Confidential. Copyright (C) 2016,
  * All Rights Reserved.
  * 
- * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
+ * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom;
  * the contents of this file may not be disclosed to third parties, copied
  * or duplicated in any form, in whole or in part, without the prior
- * written permission of Broadcom Corporation.
+ * written permission of Broadcom.
  *
  * $Id: bcmwpa.h 528743 2015-01-23 06:00:53Z $
  */
@@ -47,6 +47,14 @@
 
 #define WPA_KEY_DATA_LEN_256	256	/* allocation size of 256 for temp data pointer. */
 #define WPA_KEY_DATA_LEN_128	128	/* allocation size of 128 for temp data pointer. */
+
+/* Minimum length of WPA2 GTK encapsulation in EAPOL */
+#define EAPOL_WPA2_GTK_ENCAP_MIN_LEN  (EAPOL_WPA2_ENCAP_DATA_HDR_LEN - \
+	TLV_HDR_LEN + EAPOL_WPA2_KEY_GTK_ENCAP_HDR_LEN)
+
+/* Minimum length of WPA2 IGTK encapsulation in EAPOL */
+#define EAPOL_WPA2_IGTK_ENCAP_MIN_LEN  (EAPOL_WPA2_ENCAP_DATA_HDR_LEN - \
+	TLV_HDR_LEN + EAPOL_WPA2_KEY_IGTK_ENCAP_HDR_LEN)
 
 #define WLC_SW_KEYS(wlc, bsscfg) ((((wlc)->wsec_swkeys) || \
 	((bsscfg)->wsec & WSEC_SWFLAG)))
@@ -167,6 +175,7 @@ extern bool wpa2_cipher(wpa_suite_t *suite, ushort *cipher, bool wep_ok);
 #if defined(BCMSUP_PSK) || defined(BCMSUPPL) || defined(BCM_OL_DEV) || defined(GTKOE)
 /* Look for an encapsulated GTK; return it's address if found, NULL otherwise */
 extern eapol_wpa2_encap_data_t *wpa_find_gtk_encap(uint8 *parse, uint len);
+extern eapol_wpa2_encap_data_t *wpa_find_igtk_encap(uint8 *parse, uint len);
 
 /* Check whether pointed-to IE looks like an encapsulated GTK. */
 extern bool wpa_is_gtk_encap(uint8 *ie, uint8 **tlvs, uint *tlvs_len);

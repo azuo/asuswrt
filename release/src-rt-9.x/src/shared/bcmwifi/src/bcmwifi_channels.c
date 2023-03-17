@@ -3,7 +3,7 @@
  * Contents are wifi-specific, used by any kernel or app-level
  * software that might want wifi things as it grows.
  *
- * Copyright (C) 2015, Broadcom Corporation. All Rights Reserved.
+ * Copyright (C) 2016, Broadcom. All Rights Reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -130,6 +130,20 @@ static const char *wf_chspec_bw_str[] =
 #endif /* WL11ULB */
 };
 
+static const uint wf_chspec_bw_half_mhz[] = {
+	10,	/*   5MHz (WL_CHANSPEC_BW_5) */
+	20,	/*  10MHz (WL_CHANSPEC_BW_10) */
+	40,	/*  20MHz (WL_CHANSPEC_BW_20) */
+	80,	/*  40MHz (WL_CHANSPEC_BW_40) */
+	160,	/*  80MHz (WL_CHANSPEC_BW_80) */
+	320,	/* 160MHz (WL_CHANSPEC_BW_160) */
+	320,	/* 160MHz (WL_CHANSPEC_BW_8080) */
+	5	/* 2.5MHz (WL_CHANSPEC_BW_2P5) */
+};
+
+#define WF_NUM_BW_HALF_MHZ \
+	(sizeof(wf_chspec_bw_half_mhz)/sizeof(wf_chspec_bw_half_mhz[0]))
+
 static const uint8 wf_chspec_bw_mhz[] =
 {5, 10, 20, 40, 80, 160, 160};
 
@@ -191,7 +205,23 @@ static const uint16 opclass_data[] = {
 	(WL_CHANSPEC_BAND_2G |((WL_CHANSPEC_BW_40)&WL_CHANSPEC_BW_MASK)|WL_CHANSPEC_CTL_SB_UPPER),
 };
 
-/* convert bandwidth from chanspec to MHz */
+/* Get bandwidth of chanspec in half MHz;
+ * works with 2.5MHz to 160MHz (including 80p80) chanspecs
+ *
+ * @param	chspec		chanspec_t format
+ *
+ * @return	bandwidth of a chanspec in half MHz units
+ */
+uint
+wf_bw_chspec_to_half_mhz(chanspec_t chspec)
+{
+	uint bw;
+
+	bw = (chspec & WL_CHANSPEC_BW_MASK) >> WL_CHANSPEC_BW_SHIFT;
+	return (bw >= WF_NUM_BW_HALF_MHZ ? 0 : wf_chspec_bw_half_mhz[bw]);
+}
+
+/* convert bandwidth from chanspec to MHz; works with 5MHz to 160MHz (including 80p80) */
 static uint
 bw_chspec_to_mhz(chanspec_t chspec)
 {
@@ -610,8 +640,14 @@ done_read:
 		/* is the primary channel contained in the 1st 80MHz channel? */
 		sb = channel_to_sb(ch1, ctl_ch, bw);
 		if (sb < 0) {
-			/* no match for primary channel 'ctl_ch' in segment0 80MHz channel */
-			return 0;
+			/* ctl_ch is not in the primary 80Mhz segment */
+			sb = channel_to_sb(ch2, ctl_ch, bw);
+			if (sb < 0) {
+				/* Primary does not belong to any of the 80 Mhz segment */
+				return 0;
+			}
+			/* map it to secondary 80Mhz segment */
+			sb = sb + WL_CHANSPEC_CTL_SB_IN_80;
 		}
 
 		chspec_sb = sb << WL_CHANSPEC_CTL_SB_SHIFT;
@@ -640,7 +676,8 @@ wf_chspec_malformed(chanspec_t chanspec)
 	/* must be 2G or 5G band */
 	if (CHSPEC_IS2G(chanspec)) {
 		/* must be valid bandwidth */
-		if (!BW_LE40(chspec_bw)) {
+		if (!BW_LE20(chspec_bw) &&
+		    chspec_bw != WL_CHANSPEC_BW_40) {
 			return TRUE;
 		}
 	} else if (CHSPEC_IS5G(chanspec)) {
@@ -653,7 +690,9 @@ wf_chspec_malformed(chanspec_t chanspec)
 			if (ch1_id >= WF_NUM_5G_80M_CHANS || ch2_id >= WF_NUM_5G_80M_CHANS)
 				return TRUE;
 
-		} else if (BW_LE160(chspec_bw)) {
+		} else if (BW_LE20(chspec_bw) || chspec_bw == WL_CHANSPEC_BW_40 ||
+		           chspec_bw == WL_CHANSPEC_BW_80 || chspec_bw == WL_CHANSPEC_BW_160) {
+
 			if (chspec_ch > MAXCHANNEL) {
 				return TRUE;
 			}
@@ -673,12 +712,11 @@ wf_chspec_malformed(chanspec_t chanspec)
 	} else if (chspec_bw == WL_CHANSPEC_BW_40) {
 		if (CHSPEC_CTL_SB(chanspec) > WL_CHANSPEC_CTL_SB_LLU)
 			return TRUE;
-	} else if (chspec_bw == WL_CHANSPEC_BW_80 ||
-	           chspec_bw == WL_CHANSPEC_BW_8080) {
+	} else if (chspec_bw == WL_CHANSPEC_BW_80) {
 		if (CHSPEC_CTL_SB(chanspec) > WL_CHANSPEC_CTL_SB_LUU)
 			return TRUE;
-	}
-	else if (chspec_bw == WL_CHANSPEC_BW_160) {
+	} else if (chspec_bw == WL_CHANSPEC_BW_160 ||
+	           chspec_bw == WL_CHANSPEC_BW_8080) {
 		ASSERT(CHSPEC_CTL_SB(chanspec) <= WL_CHANSPEC_CTL_SB_UUU);
 	}
 	return FALSE;
@@ -806,7 +844,12 @@ wf_chspec_ctlchan(chanspec_t chspec)
 			bw_mhz = 80;
 
 			/* convert from channel index to channel number */
-			center_chan = wf_5g_80m_chans[chan_id];
+			if (sb >= WL_CHANSPEC_CTL_SB_IN_80) {
+				center_chan = wf_5g_80m_chans[CHSPEC_CHAN2(chspec)];
+				sb = sb - WL_CHANSPEC_CTL_SB_IN_80;
+			} else {
+				center_chan = wf_5g_80m_chans[chan_id];
+			}
 		}
 		else {
 			bw_mhz = bw_chspec_to_mhz(chspec);
@@ -1100,9 +1143,15 @@ wf_chspec_get8080_chspec(uint8 primary_20mhz, uint8 chan0, uint8 chan1)
 	/* does the primary channel fit with the 1st 80MHz channel ? */
 	sb = channel_to_sb(chan0, primary_20mhz, 80);
 	if (sb >= 0) {
-		/* yes, so chan0 is frequency segment 0, and chan1 is seg 1 */
-		seg0 = chan0_id;
-		seg1 = chan1_id;
+		/* yes, so seg0 is the lower frequency segment, and seg 1 is the higher */
+		if (chan0_id > chan1_id) {
+			seg0 = chan1_id;
+			seg1 = chan0_id;
+			sb += WL_CHANSPEC_CTL_SB_IN_80;
+		} else {
+			seg0 = chan0_id;
+			seg1 = chan1_id;
+		}
 	} else {
 		/* no, so does the primary channel fit with the 2nd 80MHz channel ? */
 		sb = channel_to_sb(chan1, primary_20mhz, 80);
@@ -1110,9 +1159,10 @@ wf_chspec_get8080_chspec(uint8 primary_20mhz, uint8 chan0, uint8 chan1)
 			/* no match for ctl_ch to either 80MHz center channel */
 			return INVCHANSPEC;
 		}
+		sb = sb + WL_CHANSPEC_CTL_SB_IN_80;
 		/* swapped, so chan1 is frequency segment 0, and chan0 is seg 1 */
-		seg0 = chan1_id;
-		seg1 = chan0_id;
+		seg0 = chan0_id;
+		seg1 = chan1_id;
 	}
 
 	chanspec = ((seg0 << WL_CHANSPEC_CHAN1_SHIFT) |
@@ -1127,7 +1177,7 @@ wf_chspec_get8080_chspec(uint8 primary_20mhz, uint8 chan0, uint8 chan1)
 /*
  * This function returns the 80Mhz channel for the given id.
  */
-static uint8
+uint8
 wf_chspec_get80Mhz_ch(uint8 chan_80Mhz_id)
 {
 	if (chan_80Mhz_id < WF_NUM_5G_80M_CHANS)
@@ -1153,8 +1203,12 @@ wf_chspec_primary80_channel(chanspec_t chanspec)
 		primary80_chan = CHSPEC_CHANNEL(chanspec);
 	}
 	else if (CHSPEC_IS8080(chanspec)) {
-		/* Channel ID 1 corresponds to frequency segment 0, the primary 80 MHz segment */
-		primary80_chan = wf_chspec_get80Mhz_ch(CHSPEC_CHAN1(chanspec));
+		uint sb = CHSPEC_CTL_SB(chanspec);
+		if (sb < WL_CHANSPEC_CTL_SB_ULL) {
+			primary80_chan = wf_chspec_get80Mhz_ch(CHSPEC_CHAN1(chanspec));
+		} else {
+			primary80_chan = wf_chspec_get80Mhz_ch(CHSPEC_CHAN2(chanspec));
+		}
 	}
 	else if (CHSPEC_IS160(chanspec)) {
 		uint8 center_chan = CHSPEC_CHANNEL(chanspec);
@@ -1192,7 +1246,12 @@ wf_chspec_secondary80_channel(chanspec_t chanspec)
 	uint8 secondary80_chan;
 
 	if (CHSPEC_IS8080(chanspec)) {
-		secondary80_chan = wf_chspec_get80Mhz_ch(CHSPEC_CHAN2(chanspec));
+		uint sb = CHSPEC_CTL_SB(chanspec);
+		if (sb < WL_CHANSPEC_CTL_SB_ULL) {
+			secondary80_chan = wf_chspec_get80Mhz_ch(CHSPEC_CHAN2(chanspec));
+		} else {
+			secondary80_chan = wf_chspec_get80Mhz_ch(CHSPEC_CHAN1(chanspec));
+		}
 	}
 	else if (CHSPEC_IS160(chanspec)) {
 		uint8 center_chan = CHSPEC_CHANNEL(chanspec);
@@ -1237,11 +1296,13 @@ wf_chspec_primary80_chspec(chanspec_t chspec)
 		chspec80 = chspec;
 	}
 	else if (CHSPEC_IS8080(chspec)) {
-
-		/* Channel ID 1 corresponds to frequency segment 0, the primary 80 MHz segment */
-		center_chan = wf_chspec_get80Mhz_ch(CHSPEC_CHAN1(chspec));
-
 		sb = CHSPEC_CTL_SB(chspec);
+		if (sb < WL_CHANSPEC_CTL_SB_ULL) {
+			center_chan = wf_chspec_get80Mhz_ch(CHSPEC_CHAN1(chspec));
+		} else {
+			center_chan = wf_chspec_get80Mhz_ch(CHSPEC_CHAN2(chspec));
+			sb &= WL_CHANSPEC_CTL_SB_LUU; /* reduce to 80MHz side band */
+		}
 
 		/* Create primary 80MHz chanspec */
 		chspec80 = (WL_CHANSPEC_BAND_5G | WL_CHANSPEC_BW_80 | sb | center_chan);
@@ -1279,6 +1340,67 @@ wf_chspec_channel(chanspec_t chspec)
 	else {
 		return ((uint8)((chspec) & WL_CHANSPEC_CHAN_MASK));
 	}
+}
+
+/* This function is used to convert 160Mhz chanspec to 80p80 chanspec
+ *
+ * For 53573/47189, PHY doesn't support real 160 Mhz operation. So for this
+ * generation of chips we demonstrate 160 Mhz operation by using two
+ * contiguous 80Mhz subband in 80p80 mode.
+ */
+void
+wf_chspec_map_160_to_80p80(chanspec_t *chanspec)
+{
+	uint chan0 = 0, chan1 = 0, chan_prim = 0;
+	chanspec_t chspec = *chanspec;
+
+	ASSERT(CHSPEC_IS160(chspec));
+
+	chan0 = CHSPEC_CHANNEL(chspec) - CH_40MHZ_APART;
+	chan1 = CHSPEC_CHANNEL(chspec) + CH_40MHZ_APART;
+
+	/* 160 MHz channels can alwayes be splitted into
+	 * two contiguous 80 Mhz channel
+	 */
+	ASSERT((chan1 - chan0) == CH_80MHZ_APART);
+
+	chan_prim = wf_chspec_ctlchan(chspec);
+
+	*chanspec = wf_chspec_get8080_chspec(chan_prim, chan0, chan1);
+
+	return;
+}
+
+/* This function is used to convert 80p80 chanspec to 160 Mhz chanspec
+ *
+ * For 53573/47189, PHY doesn't support real 160 Mhz operation. So for this
+ * generation of chips we demonstrate 160 Mhz operation by using two
+ * contiguous 80Mhz subband in 80p80 mode.
+ */
+void
+wf_chspec_map_80p80_to_160(chanspec_t *chanspec)
+{
+	uint chan0 = 0, chan1 = 0, centre_chan = 0, sb = 0;
+	chanspec_t chspec = *chanspec;
+
+	ASSERT(CHSPEC_IS8080(chspec));
+
+	chan0 = wf_chspec_get80Mhz_ch(CHSPEC_CHAN1(chspec));
+	chan1 = wf_chspec_get80Mhz_ch(CHSPEC_CHAN2(chspec));
+
+	/* Overwrite chanspec in case of contiguous channels */
+	if ((chan1 - chan0) == CH_80MHZ_APART) {
+	    if (chan0 == 42)
+		centre_chan = 50;
+	    else
+		centre_chan = 114;
+
+	    sb = CHSPEC_CTL_SB(chspec);
+
+	    *chanspec = WL_CHANSPEC_BAND_5G | WL_CHANSPEC_BW_160 | sb | centre_chan;
+	}
+
+	return;
 }
 #endif /* WL11AC_80P80 */
 
