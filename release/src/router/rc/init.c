@@ -4789,14 +4789,15 @@ int init_nvram(void)
 		nvram_set("wl1_vifnames", "wl1.1 wl1.2 wl1.3");
 		nvram_set_int("btn_rst_gpio", 7|GPIO_ACTIVE_LOW);
 		nvram_set_int("btn_wps_gpio", 9|GPIO_ACTIVE_LOW);
+		nvram_set_int("btn_wltog_gpio", 3|GPIO_ACTIVE_LOW);
 		nvram_set_int("led_pwr_gpio", 15);
 		nvram_set_int("led_wps_gpio", 10);
 //		nvram_set_int("led_5g_gpio", 11);	// active high
-		nvram_set_int("led_usb_gpio", 1);
+//		nvram_set_int("led_usb_gpio", 1);
 
 		nvram_unset("xhci_ports");
-		nvram_set("ehci_ports", "1-1");
-		nvram_set("ohci_ports", "2-1");
+		nvram_unset("ehci_ports");
+		nvram_unset("ohci_ports");
 //		if (!nvram_get("ct_max"))
 			nvram_set("ct_max", "250000");
 		add_rc_support("mssid 2.4G 5G");
@@ -5649,9 +5650,7 @@ int init_nvram(void)
 #endif
 
 #ifdef RTCONFIG_DUALWAN // RTCONFIG_DUALWAN
-#ifndef RTAC1200GP
 	add_rc_support("dualwan");
-#endif
 
 #ifdef RTCONFIG_DSL
 	set_wanscap_support("dsl");
