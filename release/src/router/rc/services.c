@@ -5450,7 +5450,7 @@ start_services(void)
 	sanity_logs();
 
 #if !(defined(RTCONFIG_QCA) || defined(RTCONFIG_RALINK) || defined(RTCONFIG_REALTEK))
-	start_erp_monitor();
+	//start_erp_monitor();
 #endif
 
 	return 0;
@@ -5587,7 +5587,7 @@ void
 stop_services(void)
 {
 #if !(defined(RTCONFIG_QCA) || defined(RTCONFIG_RALINK) || defined(RTCONFIG_REALTEK))
-	stop_erp_monitor();
+	//stop_erp_monitor();
 #endif
 #ifdef RTCONFIG_INTERNAL_GOBI
 	stop_lteled();

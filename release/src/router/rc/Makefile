@@ -397,7 +397,7 @@ OBJS += natnl_api.o
 endif
 
 ifneq ($(RTCONFIG_RALINK)$(RTCONFIG_QCA)$(RTCONFIG_REALTEK),y)
-OBJS += erp_monitor.o
+#OBJS += erp_monitor.o
 endif
 
 all: rc
