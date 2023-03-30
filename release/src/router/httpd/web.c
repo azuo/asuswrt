@@ -13482,6 +13482,9 @@ ej_memory_usage(int eid, webs_t wp, int argc, char_t **argv){
 	unsigned long total, used, mfree/*, shared, buffers, cached*/;
 	char buf[80];
 	int from_app = 0;
+	int memSize[] = {4,8,16,32,64,128,256,512,1024};
+	int i = 0, length = sizeof(memSize)/4;
+	unsigned long currentSize = 0;
 
 	from_app = check_user_agent(user_agent);
 
@@ -13494,8 +13497,17 @@ ej_memory_usage(int eid, webs_t wp, int argc, char_t **argv){
 
 	fscanf(fp, "MemTotal: %lu %s\n", &total, buf);
 	fscanf(fp, "MemFree: %lu %s\n", &mfree, buf);
-	used = total - mfree;
 	fclose(fp);
+
+	for(i=0;i<length;i++){
+		currentSize = memSize[i]*1024;
+		if(currentSize > total){
+			total = currentSize;
+			break;
+		}
+	}
+	used = total - mfree;
+
 	if(from_app == 0){
 		websWrite(wp, "<mem_info>\n");
 		websWrite(wp, "<total>%lu</total>\n", total);
