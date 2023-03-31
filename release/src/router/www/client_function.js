@@ -87,8 +87,8 @@ var isJsonChanged = function(objNew, objOld){
 	var win = window.top || window;
 	
 	// session store
-	var store = (win.name ? JSON.parse(win.name) : {});
-	
+	var store; try { store = JSON.parse(win.name); } catch (e) { store = {}; }
+
 	// save store on page unload
 	function Save() {
 		win.name = JSON.stringify(store);

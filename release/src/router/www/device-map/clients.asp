@@ -155,7 +155,7 @@ function drawClientList(tab){
 	}
 	genClientList();
 	pagesVar.endIndex = pagesVar.startIndex + pagesVar.CLIENTSPERPAGE;
-	while(i < pagesVar.endIndex){
+	while(i <= pagesVar.endIndex){
 		var clientObj = clientList[clientList[i]];	
 
 		// fileter /*
@@ -169,6 +169,7 @@ function drawClientList(tab){
 		if(tab == 'custom' && clientObj.from != "customList"){i++; pagesVar.endIndex++; continue;}
 		var clientName = (clientObj.nickName == "") ? clientObj.name : clientObj.nickName;
 		if(clientName.toLowerCase().indexOf(document.getElementById("searchingBar").value.toLowerCase()) == -1){i++; pagesVar.endIndex++; continue;}
+		if(i > pagesVar.endIndex-1) break;
 		// filter */ 
 
 		clientHtmlTd += '<div class="clientBg" onclick="popupCustomTable(\'' + clientObj.mac + '\');"><table width="100%" height="85px" border="0"><tr><td rowspan="3" width="85px">';
