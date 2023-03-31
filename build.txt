@@ -1,3 +1,5 @@
+sudo dpkg --add-architecture i386
+sudo apt update
 sudo apt install g++ libncurses5-dev libelf1:i386 lib32stdc++6 autoconf libtool bison flex autopoint xsltproc docbook-xsl intltool pkg-config
 
 cd release/src-rt-9.x/src
