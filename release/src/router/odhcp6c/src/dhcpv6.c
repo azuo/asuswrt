@@ -643,6 +643,11 @@ int dhcpv6_request(enum dhcpv6_msg type)
 		// Allow
 		if (retx->handler_finish)
 			len = retx->handler_finish();
+
+		// Possibly a stateless server (RFC3736)
+		if (len < 0 && type == DHCPV6_MSG_SOLICIT && rc >= 3 &&
+				na_mode != IA_MODE_FORCE && pd_mode != IA_MODE_FORCE)
+			len = DHCPV6_STATELESS;
 	} while (len < 0 && ((timeout == UINT32_MAX) || (elapsed / 1000 < timeout)) && 
 			(!retx->max_rc || rc < retx->max_rc));
 	return len;
