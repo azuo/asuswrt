@@ -478,7 +478,6 @@ function showInputfield2(s, v){
 		}else{
 			document.getElementById("ipv6_ipaddr_r").style.display = "";
 			document.getElementById("ipv6_prefix_length_r").style.display = "";
-			document.getElementById("ipv6_prefix_length_span").innerHTML = "";
 		}
 		
 		if(document.form.ipv6_autoconf_type[0].checked == true){
@@ -489,9 +488,9 @@ function showInputfield2(s, v){
 	}else if(s=='ipv6_autoconf_type'){
 		
 		if(document.form.ipv6_dhcp_pd[0].checked == true)
-			document.getElementById("ipv6_prefix_span").innerHTML = GetIPv6_split(document.getElementById('ipv6_ipaddr_span').innerHTML)+"::";
+			document.getElementById("ipv6_prefix_span").innerHTML = GetIPv6_prefix(document.getElementById('ipv6_ipaddr_span').innerHTML);
 		else
-			document.getElementById("ipv6_prefix_span").innerHTML = GetIPv6_split(document.form.ipv6_rtr_addr.value)+"::";
+			document.getElementById("ipv6_prefix_span").innerHTML = GetIPv6_prefix(document.form.ipv6_rtr_addr.value);
 		if(document.getElementById("ipv6_prefix_span").innerHTML == "::")
 			document.getElementById("ipv6_prefix_span").innerHTML = "";
 		inputCtrl(document.form.ipv6_dhcp_start_start, !enable);
@@ -500,17 +499,17 @@ function showInputfield2(s, v){
 		
 		if(!document.form.ipv6_dhcp_pd[0].checked || document.form.ipv6_service.value == "other"){	//ipv6_dhcp_pd for dhcp6
 			if(document.form.ipv6_rtr_addr.value != "")
-				var IPv6_rtr_addr_split = GetIPv6_split(document.form.ipv6_rtr_addr.value);			
+				var IPv6_rtr_addr_prefix = GetIPv6_prefix(document.form.ipv6_rtr_addr.value);			
 			else
-				var IPv6_rtr_addr_split = "";
+				var IPv6_rtr_addr_prefix = "";
 						
-			document.form.ipv6_prefix_span_for_start.value = IPv6_rtr_addr_split;
-			document.form.ipv6_prefix_span_for_end.value = IPv6_rtr_addr_split;
+			document.form.ipv6_prefix_span_for_start.value = IPv6_rtr_addr_prefix.substring(0, IPv6_rtr_addr_prefix.lastIndexOf(':') + 1);
+			document.form.ipv6_prefix_span_for_end.value = IPv6_rtr_addr_prefix.substring(0, IPv6_rtr_addr_prefix.lastIndexOf(':') + 1);
 			
 			
 			if(ipv6_dhcp_start_orig != "" && ipv6_dhcp_end_orig != ""){
-				document.form.ipv6_dhcp_start_start.value = ipv6_dhcp_start_orig.split("::")[1];
-				document.form.ipv6_dhcp_end_end.value = ipv6_dhcp_end_orig.split("::")[1];	
+				document.form.ipv6_dhcp_start_start.value = ipv6_dhcp_start_orig.substring(ipv6_dhcp_start_orig.lastIndexOf(':') + 1);
+				document.form.ipv6_dhcp_end_end.value = ipv6_dhcp_end_orig.substring(ipv6_dhcp_end_orig.lastIndexOf(':') + 1);
 			}else{
 				document.form.ipv6_dhcp_start_start.value = 1000;
 				document.form.ipv6_dhcp_end_end.value = 2000;
@@ -519,27 +518,27 @@ function showInputfield2(s, v){
 		}
 		else if(!document.form.ipv6_dhcp_pd[1].checked){
 			if(document.getElementById('ipv6_ipaddr_span').innerHTML != "")
-				var IPv6_rtr_addr_split = GetIPv6_split(document.getElementById('ipv6_ipaddr_span').innerHTML);
+				var IPv6_rtr_addr_prefix = GetIPv6_prefix(document.getElementById('ipv6_ipaddr_span').innerHTML);
 			else
-				var IPv6_rtr_addr_split = "";
+				var IPv6_rtr_addr_prefix = "";
 				
-				document.form.ipv6_prefix_span_for_start.value = IPv6_rtr_addr_split;
-				document.form.ipv6_prefix_span_for_end.value = IPv6_rtr_addr_split;
+				document.form.ipv6_prefix_span_for_start.value = IPv6_rtr_addr_prefix.substring(0, IPv6_rtr_addr_prefix.lastIndexOf(':') + 1);
+				document.form.ipv6_prefix_span_for_end.value = IPv6_rtr_addr_prefix.substring(0, IPv6_rtr_addr_prefix.lastIndexOf(':') + 1);
 				
 				
 			if(ipv6_dhcp_start_orig != "" && ipv6_dhcp_end_orig != ""){
-				document.form.ipv6_dhcp_start_start.value = ipv6_dhcp_start_orig.split("::")[1];
-				document.form.ipv6_dhcp_end_end.value = ipv6_dhcp_end_orig.split("::")[1];	
+				document.form.ipv6_dhcp_start_start.value = ipv6_dhcp_start_orig.substring(ipv6_dhcp_start_orig.lastIndexOf(':') + 1);
+				document.form.ipv6_dhcp_end_end.value = ipv6_dhcp_end_orig.substring(ipv6_dhcp_end_orig.lastIndexOf(':') + 1);
 			}else{
 				document.form.ipv6_dhcp_start_start.value = 1000;
 				document.form.ipv6_dhcp_end_end.value = 2000;
 			}			
 		}
 		else if(ipv6_dhcp_start_orig != "" && ipv6_dhcp_end_orig != ""){
-				document.form.ipv6_prefix_span_for_start.value = ipv6_dhcp_start_orig.split("::")[0];
-				document.form.ipv6_prefix_span_for_end.value = ipv6_dhcp_end_orig.split("::")[0];
-				document.form.ipv6_dhcp_start_start.value = ipv6_dhcp_start_orig.split("::")[1];
-				document.form.ipv6_dhcp_end_end.value = ipv6_dhcp_end_orig.split("::")[1];
+				document.form.ipv6_prefix_span_for_start.value = ipv6_dhcp_start_orig.substring(0, ipv6_dhcp_start_orig.lastIndexOf(':') + 1);
+				document.form.ipv6_prefix_span_for_end.value = ipv6_dhcp_end_orig.substring(0, ipv6_dhcp_end_orig.lastIndexOf(':') + 1);
+				document.form.ipv6_dhcp_start_start.value = ipv6_dhcp_start_orig.substring(ipv6_dhcp_start_orig.lastIndexOf(':') + 1);
+				document.form.ipv6_dhcp_end_end.value = ipv6_dhcp_end_orig.substring(ipv6_dhcp_end_orig.lastIndexOf(':') + 1);
 		}
 	}
 }
@@ -608,32 +607,33 @@ function ipv6_valid(obj){
 	}	
 }
 
-function GetIPv6_split(obj){
-	
-	var Split_1_IPv6 = obj.split("::");
-	var Split_1_IPv6_pos = obj.search("::");
-	var Split_2_IPv6 = obj.split(":");
-	var return_prefix = "";
-	if(Split_1_IPv6.length >1){
-		if(Split_1_IPv6[0].substring(0,Split_1_IPv6_pos).split(":").length >4){	//get ipv6_prefix by Split_2_IPv6[0]~[3]
-			db(Split_1_IPv6[0].substring(0,Split_1_IPv6_pos).split(":").length);
-			for(i=0;i<4;i++){
-				return_prefix += Split_2_IPv6[i];
-				if(i<3)
-					return_prefix += ":";
+function GetIPv6_prefix(obj){
+	var n = (
+		document.form.ipv6_dhcp_pd[1].checked ?
+		document.form.ipv6_prefix_length.value :
+		document.getElementById("ipv6_prefix_length_span").innerHTML
+	) || 64;
+	var fields = obj.split(":");
+	for (var i = 0; i < fields.length; ++ i) {
+		if (n >= 16) {
+			if (!fields[i].length) {
+				if (fields.length < 8)
+					fields.splice(i, 0, "0");
+				else
+					fields[i] = "0";
 			}
-		}else{
-			db(Split_1_IPv6[0]);
-			return_prefix = Split_1_IPv6[0];
-		}		
-	}else if(Split_2_IPv6.length > 1){
-		for(j=0;j<4;j++){
-			return_prefix += Split_2_IPv6[j];
-			if(j<3)
-				return_prefix += ":";
-		}		
-	}	
-	return return_prefix;
+			n -= 16;
+		}
+		else if (n > 0) {
+			var v = parseInt(fields[i] || 0, 16);
+			v &= ~((1 << (16 - n)) - 1);
+			fields[i] = v.toString(16);
+			n = 0;
+		}
+		else
+			fields[i] = "0";
+	}
+	return fields.join(":").replace(/(^0)?(:0+)+(:|$)/, "::");
 }
 
 function validIPv6_dhcp(obj){
@@ -795,9 +795,9 @@ function applyRule(){
 				
 			if(document.form.ipv6_autoconf_type[1].checked){
 				document.form.ipv6_dhcp_start.disabled = false;
-				document.form.ipv6_dhcp_start.value = document.form.ipv6_prefix_span_for_start.value +"::"+document.form.ipv6_dhcp_start_start.value;
+				document.form.ipv6_dhcp_start.value = document.form.ipv6_prefix_span_for_start.value + document.form.ipv6_dhcp_start_start.value;
 				document.form.ipv6_dhcp_end.disabled = false;
-				document.form.ipv6_dhcp_end.value = document.form.ipv6_prefix_span_for_end.value +"::"+document.form.ipv6_dhcp_end_end.value;
+				document.form.ipv6_dhcp_end.value = document.form.ipv6_prefix_span_for_end.value + document.form.ipv6_dhcp_end_end.value;
 			}
 		}
 
@@ -821,9 +821,9 @@ function applyRule(){
 
 			if(document.form.ipv6_autoconf_type[1].checked){
 				document.form.ipv6_dhcp_start.disabled = false;
-				document.form.ipv6_dhcp_start.value = document.form.ipv6_prefix_span_for_start.value +"::"+document.form.ipv6_dhcp_start_start.value;
+				document.form.ipv6_dhcp_start.value = document.form.ipv6_prefix_span_for_start.value + document.form.ipv6_dhcp_start_start.value;
 				document.form.ipv6_dhcp_end.disabled = false;
-				document.form.ipv6_dhcp_end.value = document.form.ipv6_prefix_span_for_end.value +"::"+document.form.ipv6_dhcp_end_end.value;
+				document.form.ipv6_dhcp_end.value = document.form.ipv6_prefix_span_for_end.value + document.form.ipv6_dhcp_end_end.value;
 			}
 		}
 		
@@ -885,7 +885,6 @@ function showInfo(){
 			if(document.getElementById("ipv6_ipaddr_r").style.display == ""){
 					document.getElementById("ipv6_ipaddr_span").innerHTML = state_ipv6_rtr_addr;
 			}
-			setTimeout("update_info();", 1500);
 		}		
 }
 /*------------- get IPv6 info end ----------------------------*/
@@ -1132,7 +1131,7 @@ function showInfo(){
 					<tr>
 						<th><#Prefix_lan_Length#></th>
 						<td>
-								<input type="text" maxlength="3" class="input_3_table" name="ipv6_prefix_length" value="<% nvram_get("ipv6_prefix_length"); %>" autocorrect="off" autocapitalize="off">
+								<input type="text" maxlength="3" class="input_3_table" name="ipv6_prefix_length" value="<% nvram_get("ipv6_prefix_length"); %>" onBlur="if(document.form.ipv6_autoconf_type[1].checked){showInputfield2('ipv6_autoconf_type', '1');}else{showInputfield2('ipv6_autoconf_type', '0');}" autocorrect="off" autocapitalize="off">
 		     		</td>
 		     	</tr>
 					<tr id="ipv6_prefix_length_r">
@@ -1165,8 +1164,7 @@ function showInfo(){
 					<tr>
 		     		<th><#LANHostConfig_MinAddress_itemname#></th>	<!-- DHCP pool start -->
 		     		<td>
-		     				<input type="text" maxlength="19" class="input_20_table" name="ipv6_prefix_span_for_start" style="color:#BBBBBB" readonly autocorrect="off" autocapitalize="off">		     				
-		     				::
+		     				<input type="text" maxlength="35" class="input_25_table" name="ipv6_prefix_span_for_start" style="color:#BBBBBB" readonly autocorrect="off" autocapitalize="off">		     				
 		     				<input type="text" maxlength="4" class="input_6_table" name="ipv6_dhcp_start_start" autocorrect="off" autocapitalize="off" >
 		     		</td>
 		    	</tr>
@@ -1174,8 +1172,7 @@ function showInfo(){
 		     	<tr>
 		     		<th><#LANHostConfig_MaxAddress_itemname#></th>	<!-- DHCP pool end -->
 		     		<td>
-		     			<input type="text" maxlength="19" class="input_20_table" name="ipv6_prefix_span_for_end" style="color:#BBBBBB" readonly autocorrect="off" autocapitalize="off">
-		     			::
+		     			<input type="text" maxlength="35" class="input_25_table" name="ipv6_prefix_span_for_end" style="color:#BBBBBB" readonly autocorrect="off" autocapitalize="off">
 		     			<input type="text" maxlength="4" class="input_6_table" name="ipv6_dhcp_end_end" autocorrect="off" autocapitalize="off">
 		     		</td>
 		    	</tr>

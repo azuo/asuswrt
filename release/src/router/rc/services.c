@@ -1102,9 +1102,9 @@ void start_dnsmasq(void)
 
 #ifdef RTCONFIG_IPV6
 	if (ipv6_enabled() && is_routing_enabled()) {
-		struct in6_addr addr;
 		int ra_lifetime, dhcp_lifetime;
-		int service, stateful, announce, dhcp_start, dhcp_end;
+		int service, stateful, announce;
+		char *dhcp_start, *dhcp_end;
 
 		service = get_ipv6_service();
 		stateful = (service == IPV6_NATIVE_DHCP || service == IPV6_MANUAL) ?
@@ -1130,14 +1130,12 @@ void start_dnsmasq(void)
 		if (stateful) {
 			/* TODO: rework WEB UI to specify ranges without prefix
 			 * TODO: add size checking, now range takes all of 16 bit */
-			dhcp_start = (inet_pton(AF_INET6, nvram_safe_get(ipv6_nvname("ipv6_dhcp_start")), &addr) > 0) ?
-			    ntohs(addr.s6_addr16[7]) : 0x1000;
-			dhcp_end = (inet_pton(AF_INET6, nvram_safe_get(ipv6_nvname("ipv6_dhcp_end")), &addr) > 0) ?
-			    ntohs(addr.s6_addr16[7]) : 0x2000;
-			fprintf(fp, "dhcp-range=lan,::%04x,::%04x,constructor:%s,%d\n",
-				(dhcp_start < dhcp_end) ? dhcp_start : dhcp_end,
-				(dhcp_start < dhcp_end) ? dhcp_end : dhcp_start,
-				lan_ifname, dhcp_lifetime);
+			dhcp_start = nvram_safe_get(ipv6_nvname("ipv6_dhcp_start"));
+			dhcp_end = nvram_safe_get(ipv6_nvname("ipv6_dhcp_end"));
+			fprintf(fp, "dhcp-range=lan,%s,%s,%d,%d\n",
+				*dhcp_start ? dhcp_start : "::",
+				*dhcp_end ? dhcp_end : "::",
+				nvram_get_int(ipv6_nvname("ipv6_prefix_length")) ? : 64, dhcp_lifetime);
 			have_dhcp |= 2; /* DHCPv6 */
 		} else if (announce) {
 			fprintf(fp, "dhcp-range=lan,::,constructor:%s,ra-stateless,%d,%d\n",
