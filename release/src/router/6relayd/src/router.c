@@ -519,36 +519,56 @@ static void forward_router_advertisement(uint8_t *data, size_t len)
 
 	// Forward advertisement to all slave interfaces
 	struct sockaddr_in6 all_nodes = {AF_INET6, 0, 0, ALL_IPV6_NODES, 0};
-	struct iovec iov = {data, len};
+	struct {
+		uint8_t type;
+		uint8_t len;
+		uint8_t pad;
+		uint8_t pad2;
+		uint32_t lifetime;
+		struct in6_addr addr;
+	} dns = {ND_OPT_RECURSIVE_DNS, 3, 0, 0, -1, IN6ADDR_ANY_INIT};
+	struct iovec iov[] = {{data, len}, {&dns, sizeof(dns)}};
 	for (size_t i = 0; i < config->slavecount; ++i) {
 		// Fixup source hardware address option
 		if (mac_ptr)
 			memcpy(mac_ptr, config->slaves[i].mac, 6);
 
+		size_t iov_len = 1;
 		// If we have to rewrite DNS entries
-		if (config->always_rewrite_dns && dns_ptr && dns_count > 0) {
+		if (config->always_rewrite_dns) {
 			const struct in6_addr *rewrite;
 			struct relayd_ipaddr addr;
+			uint32_t lifetime;
 
 			if (!IN6_IS_ADDR_UNSPECIFIED(&config->dnsaddr)) {
 				rewrite = &config->dnsaddr;
+				lifetime = MaxPreferredTime;
 			} else {
 				if (relayd_get_interface_addresses(
 					config->slaves[i].ifindex,
 					&addr, 1) < 1)
 				continue; // Unable to comply
 				rewrite = &addr.addr;
+				lifetime = addr.preferred;
 			}
 
-			// Copy over any other addresses
-			for (size_t i = 0; i < dns_count; ++i)
-				dns_ptr[i] = *rewrite;
+			if (dns_ptr && dns_count > 0) {
+				// Copy over any other addresses
+				for (size_t j = 0; j < dns_count; ++j)
+					dns_ptr[j] = *rewrite;
+				((uint32_t*)dns_ptr)[-1] = htonl(lifetime);
+			}
+			else {
+				dns.addr = *rewrite;
+				dns.lifetime = htonl(lifetime);
+				iov_len = 2;
+			}
 		}
 
 		if (config->always_rewrite_dns && domain_ptr && domain_len > 0)
 			memset(domain_ptr - 4, 0, domain_len + 4);
 
 		relayd_forward_packet(router_discovery_event.socket,
-			&all_nodes, &iov, 1, &config->slaves[i]);
+			&all_nodes, iov, iov_len, &config->slaves[i]);
 	}
 }
