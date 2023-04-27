@@ -640,7 +640,7 @@ ifeq ($(RTCONFIG_KEY_GUARD),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc keyguard
 endif
 ifneq ($(RTCONFIG_RALINK)$(RTCONFIG_QCA)$(RTCONFIG_REALTEK),y)
-	@cd $(INSTALLDIR)/sbin && ln -sf rc erp_monitor
+#	@cd $(INSTALLDIR)/sbin && ln -sf rc erp_monitor
 endif
 
 clean:
