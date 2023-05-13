@@ -4803,6 +4803,7 @@ int init_nvram(void)
 		add_rc_support("mssid 2.4G 5G");
 		add_rc_support("switchctrl"); // broadcom: for jumbo frame only
 		add_rc_support("manual_stb");
+		add_rc_support("pwrctrl");
 		add_rc_support("WIFI_LOGO");
 		add_rc_support("update");
 		if (model == MODEL_RTAC1200G) {

@@ -3676,7 +3676,16 @@ GEN_CONF:
 			switch (model) {
 				default:
 
-					eval("wl", "-i", ifname, "txpwr1", "-1");
+					if (txpower < 25)
+						eval("wl", "-i", ifname, "txpwr1", "10");
+					else if (txpower < 50)
+						eval("wl", "-i", ifname, "txpwr1", "14");
+					else if (txpower < 75)
+						eval("wl", "-i", ifname, "txpwr1", "17");
+					else if (txpower < 100)
+						eval("wl", "-i", ifname, "txpwr1", "20");
+					else
+						eval("wl", "-i", ifname, "txpwr1", "-1");
 
 					break;
 			}
