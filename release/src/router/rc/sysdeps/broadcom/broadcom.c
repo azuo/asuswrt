@@ -3674,18 +3674,23 @@ GEN_CONF:
 			dbG("unit: %d, txpower: %d%\n", unit, txpower);
 
 			switch (model) {
+				case MODEL_RTAC1200GP:
+					// use values set for maxp#ga# in prebuild/tcode_brcm.o
+					if (txpower < 25)
+						eval("wl", "-i", ifname, "pwr_percent", "52");
+					else if (txpower < 50)
+						eval("wl", "-i", ifname, "pwr_percent", "64");
+					else if (txpower < 88)
+						eval("wl", "-i", ifname, "pwr_percent", "76");
+					else if (txpower < 100)
+						eval("wl", "-i", ifname, "pwr_percent", "88");
+					else
+						eval("wl", "-i", ifname, "pwr_percent", "100");
+					break;
+
 				default:
 
-					if (txpower < 25)
-						eval("wl", "-i", ifname, "txpwr1", "10");
-					else if (txpower < 50)
-						eval("wl", "-i", ifname, "txpwr1", "14");
-					else if (txpower < 75)
-						eval("wl", "-i", ifname, "txpwr1", "17");
-					else if (txpower < 100)
-						eval("wl", "-i", ifname, "txpwr1", "20");
-					else
-						eval("wl", "-i", ifname, "txpwr1", "-1");
+					eval("wl", "-i", ifname, "txpwr1", "-1");
 
 					break;
 			}
