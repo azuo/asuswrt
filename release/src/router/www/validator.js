@@ -671,6 +671,80 @@ var validator = {
 		}
 	},
 
+	isLegal_ipv6: function(obj) {
+		// check whether every char of the str is a Hex char(0~9,a~f,A~F)
+		var isHex = function(str) {
+			if(str.length == 0 || str.length > 4) {
+				return false;
+			}
+			str = str.toLowerCase();
+			var ch;
+			for(var i=0; i< str.length; i++) {
+				ch = str.charAt(i);
+				if(!(ch >= '0' && ch <= '9') && !(ch >= 'a' && ch <= 'f')) {
+					return false;
+				}
+			}
+			return true;
+		}
+
+		var idx = obj.value.indexOf("::");
+		// there is no "::" in the ip address
+		if (idx == -1) {
+			var items = obj.value.split(":");
+			if (items.length != 8) {
+				alert(obj.value + " <#JS_validip#>");
+				obj.focus();
+				return false;
+			}
+			else {
+				for (var key = 0; key < items.length; key += 1) {
+					if (!isHex(items[key])) {
+						alert(obj.value + " <#JS_validip#>");
+						obj.focus();
+						return false;
+					}
+				}
+				return true;
+			}
+		}
+		else {
+			// at least, there are two "::" in the ip address
+			if (idx != obj.value.lastIndexOf("::")) {
+				alert(obj.value + " <#JS_validip#>");
+				obj.focus();
+				return false;
+			}
+			else {
+				var items = obj.value.split("::");
+				var items0 = items[0].split(":");
+				var items1 = items[1].split(":");
+				if ((items0.length + items1.length) > 7) {
+					alert(obj.value + " <#JS_validip#>");
+					obj.focus();
+					return false;
+				}
+				else {
+					for (var key = 0; key < items0.length; key += 1) {
+						if (!isHex(items0[key])) {
+							alert(obj.value + " <#JS_validip#>");
+							obj.focus();
+							return false;
+						}
+					}
+					for (var key = 0; key < items1.length; key += 1) {
+						if (!isHex(items1[key])) {
+							alert(obj.value + " <#JS_validip#>");
+							obj.focus();
+							return false;
+						}
+					}
+					return true;
+				}
+			}
+		}
+	},
+
 	isPortRange: function(o,event){
 		var keyPressed = event.keyCode ? event.keyCode : event.which;
 

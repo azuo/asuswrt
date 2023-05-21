@@ -394,6 +394,9 @@ void config_loopback(void)
 #endif
 	/* Bring up loopback interface */
 	ifconfig("lo", IFUP, "127.0.0.1", "255.0.0.0");
+#ifdef RTCONFIG_DNSPRIVACY
+	ifconfig("lo:0", IFUP, "127.0.1.1", "255.0.0.0");
+#endif
 
 	/* Add to routing table */
 	route_add("lo", 0, "127.0.0.0", "0.0.0.0", "255.0.0.0");

@@ -2646,9 +2646,8 @@ void httpd_check()
 
 void dnsmasq_check()
 {
-	if (!pids("dnsmasq")) {
-		if (nvram_get_int("asus_mfg") == 1)
-			return;
+	if (nvram_get_int("asus_mfg") == 1)
+		return;
 
 	if (!is_routing_enabled()
 #ifdef RTCONFIG_WIRELESSREPEATER
@@ -2657,10 +2656,18 @@ void dnsmasq_check()
 	)
 		return;
 
+	if (!pids("dnsmasq")) {
 		start_dnsmasq();
 		TRACE_PT("watchdog: dnsmasq died. start dnsmasq...\n");
 	}
+#ifdef RTCONFIG_DNSPRIVACY
+	else if (nvram_get_int("dnspriv_enable") && !pids("stubby")) {
+		start_stubby();
+		TRACE_PT("watchdog: stubby died. start stubby...\n");
+	}
+#endif
 }
+
 #if ! (defined(RTCONFIG_QCA) || defined(RTCONFIG_RALINK))
 void watchdog_check()
 {

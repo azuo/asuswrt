@@ -56,6 +56,10 @@ static void ntp_service()
 
 		setup_timezone();
 
+#ifdef RTCONFIG_DNSPRIVACY
+		if (nvram_get_int("dnspriv_enable"))
+			notify_rc("restart_stubby");
+#endif
 		if (is_routing_enabled())
 			notify_rc_and_period_wait("restart_upnp", 25);
 #ifdef RTCONFIG_DISK_MONITOR

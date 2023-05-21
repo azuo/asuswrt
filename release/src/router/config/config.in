@@ -282,6 +282,10 @@ config RTCONFIG_YANDEXDNS
 	bool "Yandex.DNS Support"
 	default n
 
+config RTCONFIG_DNSPRIVACY
+	bool "DNS-over-TLS Support"
+	default n
+
 config RTCONFIG_DSL
 	bool "DSL Support"
 	default n

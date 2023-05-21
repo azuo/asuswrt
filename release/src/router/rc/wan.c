@@ -2135,6 +2135,9 @@ int update_resolvconf(void)
 #ifdef RTCONFIG_YANDEXDNS
 	int yadns_mode = nvram_get_int("yadns_enable_x") ? nvram_get_int("yadns_mode") : YADNS_DISABLED;
 #endif
+#ifdef RTCONFIG_DNSPRIVACY
+	int dnspriv_enable = nvram_get_int("dnspriv_enable");
+#endif
 
 	lock = file_lock("resolv");
 
@@ -2167,6 +2170,19 @@ int update_resolvconf(void)
 
 		foreach(tmp, (*wan_dns ? wan_dns : wan_xdns), next)
 			fprintf(fp, "nameserver %s\n", tmp);
+
+		do {
+#ifdef RTCONFIG_YANDEXDNS
+			if (yadns_mode != YADNS_DISABLED)
+				break;
+#endif
+#ifdef RTCONFIG_DNSPRIVACY
+			if (dnspriv_enable)
+				break;
+#endif
+			foreach(tmp, (*wan_dns ? wan_dns : wan_xdns), next)
+				fprintf(fp_servers, "server=%s\n", tmp);
+		} while (0);
 
 		wan_domain = nvram_safe_get(strcat_r(prefix, "domain", tmp));
 		foreach(tmp, wan_dns, next) {
@@ -2203,6 +2219,12 @@ int update_resolvconf(void)
 			fprintf(fp_servers, "server=%s\n", server[unit]);
 			fprintf(fp_servers, "server=%s#%u\n", server[unit], YADNS_DNSPORT);
 		}
+	}
+#endif
+#ifdef RTCONFIG_DNSPRIVACY
+	if (dnspriv_enable) {
+		fprintf(fp, "nameserver %s\n", "127.0.1.1");
+		fprintf(fp_servers, "server=%s\n", "127.0.1.1");
 	}
 #endif
 
@@ -2245,6 +2267,10 @@ int update_resolvconf(void)
 				fprintf(fp_servers, "server=/%s/%s\n", "local", tmp);
 				continue;
 			}
+#endif
+#ifdef RTCONFIG_DNSPRIVACY
+			if (dnspriv_enable)
+				continue;
 #endif
 			fprintf(fp_servers, "server=%s\n", tmp);
 		}

@@ -340,46 +340,57 @@ void update_vpnc_state(char *prefix, int state, int reason)
 
 int vpnc_update_resolvconf(void)
 {
-	FILE *fp;
+	FILE *fp, *fp_servers;
 	char tmp[32];
 	char prefix[] = "vpnc_";
 	char word[256], *next;
 	int lock;
 	char *wan_dns, *wan_xdns;
+#ifdef RTCONFIG_YANDEXDNS
+	int yadns_mode = nvram_get_int("yadns_enable_x") ? nvram_get_int("yadns_mode") : YADNS_DISABLED;
+#endif
+#ifdef RTCONFIG_DNSPRIVACY
+	int dnspriv_enable = nvram_get_int("dnspriv_enable");
+#endif
 
 	lock = file_lock("resolv");
 
 	if (!(fp = fopen("/tmp/resolv.conf", "w+"))) {
 		perror("/tmp/resolv.conf");
 		file_unlock(lock);
-		return errno;
+		return -1;
 	}
-
-#if 0 /* unsupported */
-#ifdef RTCONFIG_IPV6
-	/* Handle IPv6 DNS before IPv4 ones */
-	if (ipv6_enabled()) {
-		if ((get_ipv6_service() == IPV6_NATIVE_DHCP) && nvram_get_int(ipv6_nvname("ipv6_dnsenable"))) {
-			foreach(word, nvram_safe_get(ipv6_nvname("ipv6_get_dns")), next)
-				fprintf(fp, "nameserver %s\n", word);
-		} else
-		for (unit = 1; unit <= 3; unit++) {
-			sprintf(tmp, "ipv6_dns%d", unit);
-			next = nvram_safe_get(ipv6_nvname(tmp));
-			if (*next && strcmp(next, "0.0.0.0") != 0)
-				fprintf(fp, "nameserver %s\n", next);
-		}
+#ifdef RTCONFIG_YANDEXDNS
+	if (yadns_mode != YADNS_DISABLED) {
+		/* keep yandex.dns servers */
+		fp_servers = NULL;
+	} else
+#endif
+#ifdef RTCONFIG_DNSPRIVACY
+	if (dnspriv_enable) {
+		/* keep dns privacy servers */
+		fp_servers = NULL;
+	} else
+#endif
+	if (!(fp_servers = fopen("/tmp/resolv.dnsmasq", "w+"))) {
+		perror("/tmp/resolv.dnsmasq");
+		fclose(fp);
+		file_unlock(lock);
+		return -1;
 	}
-#endif
-#endif
 
 	wan_dns = nvram_safe_get(strcat_r(prefix, "dns", tmp));
 	wan_xdns = nvram_safe_get(strcat_r(prefix, "xdns", tmp));
 
-	foreach(word, (*wan_dns ? wan_dns : wan_xdns), next)
+	foreach(word, (*wan_dns ? wan_dns : wan_xdns), next) {
 		fprintf(fp, "nameserver %s\n", word);
+		if (fp_servers)
+			fprintf(fp_servers, "server=%s\n", word);
+	}
 
 	fclose(fp);
+	if (fp_servers)
+		fclose(fp_servers);
 
 	file_unlock(lock);
 

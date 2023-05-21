@@ -1174,6 +1174,11 @@ struct nvram_tuple router_defaults[] = {
 #endif
 	{ "dns_delay_round", "2" },
 
+#ifdef RTCONFIG_DNSPRIVACY
+	{ "dnspriv_enable", "0" },	/* 0: None 1: DNS-over-TLS */
+	{ "dnspriv_rulelist", "" },	/* ... */
+#endif
+
 	/* Misc WAN parameters */
 	{ "wan_desc", "" },		/* WAN connection description */
 	{ "wan_upnp_enable", "1" }, 	// upnp igd
