@@ -410,7 +410,7 @@ obj-y += httpd json-c
 obj-y += www
 obj-y += bridge
 obj-y += dnsmasq
-obj-${RTCONFIG_DNSPRIVACY} += openssl
+obj-${RTCONFIG_DNSPRIVACY} += openssl-1.1.x
 obj-${RTCONFIG_DNSPRIVACY} += libyaml
 obj-${RTCONFIG_DNSPRIVACY} += getdns
 obj-y += etc
@@ -1803,13 +1803,13 @@ getdns-configure: getdns/configure
 		--enable-static --disable-shared --disable-gost \
 		--enable-stub-only --without-libidn --without-libidn2 \
 		--without-getdns_query --without-getdns_server_mon --with-stubby \
-		--with-ssl=$(TOP)/openssl \
+		--with-ssl=$(TOP)/openssl-1.1.x \
 		--with-libyaml=$(STAGEDIR)/usr \
-		CFLAGS="-Os -I$(TOP)/openssl/include -I$(STAGEDIR)/usr/include -ffunction-sections -fdata-sections $(EXTRACFLAGS)" \
-		LDFLAGS="-L$(TOP)/openssl -L$(STAGEDIR)/usr/lib -Wl,--gc-sections $(EXTRALDFLAGS)" \
+		CFLAGS="-Os -I$(TOP)/openssl-1.1.x/include -I$(STAGEDIR)/usr/include -ffunction-sections -fdata-sections $(EXTRACFLAGS)" \
+		LDFLAGS="-L$(TOP)/openssl-1.1.x -L$(STAGEDIR)/usr/lib -Wl,--gc-sections $(EXTRALDFLAGS)" \
 		LIBS="-lcrypto -lssl -lyaml"
 
-getdns: openssl libyaml getdns/Makefile
+getdns: openssl-1.1.x libyaml getdns/Makefile
 	$(MAKE) -C $@
 
 getdns-install:
@@ -1820,6 +1820,43 @@ getdns-install:
 getdns-clean:
 	[ ! -f getdns/Makefile ] || $(MAKE) -C getdns distclean
 	@rm -f getdns/Makefile
+
+openssl-1.1.x/Makefile:
+	cd openssl-1.1.x && \
+	./Configure $(HOSTCONFIG) --prefix=/etc --openssldir=/etc --cross-compile-prefix=' ' \
+	-ffunction-sections -fdata-sections -Wl,--gc-sections \
+	shared $(OPENSSL_CIPHERS) no-async
+#	no-sha0 no-smime no-camellia no-krb5 no-rmd160 no-ripemd \
+#	no-seed no-capieng no-cms no-gms no-gmp no-rfc3779 \
+#	no-ec no-ecdh no-ecdsa no-err no-hw no-jpake no-threads \
+#	no-zlib no-engine no-engines no-sse2 no-perlasm \
+#	no-dtls1 no-store no-psk no-md2 no-mdc2 no-ts
+
+	-@$(MAKE) -C openssl-1.1.x clean
+	@touch $@
+
+openssl-1.1.x: openssl-1.1.x/Makefile
+	$(MAKE) -C openssl-1.1.x && $(MAKE) $@-stage
+
+openssl-1.1.x-clean:
+	[ ! -f openssl-1.1.x/Makefile ] || $(MAKE) -C openssl-1.1.x clean
+	@rm -f openssl-1.1.x/Makefile
+
+openssl-1.1.x-install: openssl-1.1.x
+	install -D openssl-1.1.x/libcrypto.so.1.1 $(INSTALLDIR)/openssl-1.1.x/usr/lib/libcrypto.so.1.1
+	$(STRIP) $(INSTALLDIR)/openssl-1.1.x/usr/lib/libcrypto.so.1.1
+#	cd $(INSTALLDIR)/openssl-1.1.x/usr/lib && ln -sf libcrypto.so.1.1 libcrypto.so
+
+#	install -D openssl-1.1.x/apps/openssl $(INSTALLDIR)/openssl-1.1.x/usr/sbin/openssl
+#	$(STRIP) $(INSTALLDIR)/openssl-1.1.x/usr/sbin/openssl
+#	chmod 0500 $(INSTALLDIR)/openssl-1.1.x/usr/sbin/openssl
+
+	install -D openssl-1.1.x/libssl.so.1.1 $(INSTALLDIR)/openssl-1.1.x/usr/lib/libssl.so.1.1
+	$(STRIP) $(INSTALLDIR)/openssl-1.1.x/usr/lib/libssl.so.1.1
+#	cd $(INSTALLDIR)/openssl-1.1.x/usr/lib && ln -sf libssl.so.1.1 libssl.so
+
+openssl-1.1.x-stage:
+	@$(MAKE) -C openssl-1.1.x install_sw DESTDIR=$(STAGEDIR)
 
 iptables:
 	@$(SEP)
