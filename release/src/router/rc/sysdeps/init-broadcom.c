@@ -2406,8 +2406,10 @@ void init_syspara(void)
 
 	if (nvram_get("secret_code"))
 		nvram_set("wps_device_pin", nvram_get("secret_code"));
-	else
+	else {
+		nvram_set("secret_code", "12345670");
 		nvram_set("wps_device_pin", "12345670");
+	}
 }
 
 #ifdef RTCONFIG_BCMARM

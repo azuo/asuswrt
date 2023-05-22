@@ -55,9 +55,23 @@ all:
 clean:
 #	rm -f rom/etc/motd
 
+certs/ca-bundle.crt:
+	certs/mk-ca-bundle.pl -fu $@
+
+certs: dummy
+	certs/mk-ca-bundle.pl -fu certs/ca-bundle.crt
+
+certs-install: certs/ca-bundle.crt
+	install -d $(INSTALLDIR)/rom/etc/ssl/certs
+	install -m 0644 certs/ca-bundle.crt $(INSTALLDIR)/rom/etc/ssl/certs/ca-certificates.crt
+	sed -r '/^\s*(#|$$)/d;/\-BEGIN/{h;d};H;/\-END/{x;/\-BEGIN/p};d' -i $(INSTALLDIR)/rom/etc/ssl/certs/ca-certificates.crt
+	ln -s certs/ca-certificates.crt $(INSTALLDIR)/rom/etc/ssl/cert.pem
+
 install:
 	mkdir -p $(INSTALLDIR)
 	( tar --exclude=.svn --exclude=*.bak -cpf - rom ) | ( cd $(INSTALLDIR) && tar -xpf - )
+
+	$(MAKE) certs-install
 
 ifeq ($(RTAC88U),y)
 	install -m 0644 smb.conf $(INSTALLDIR)/rom/smb.conf

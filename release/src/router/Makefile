@@ -1823,7 +1823,7 @@ getdns-clean:
 
 openssl-1.1.x/Makefile:
 	cd openssl-1.1.x && \
-	./Configure $(HOSTCONFIG) --prefix=/etc --openssldir=/etc --cross-compile-prefix=' ' \
+	./Configure $(HOSTCONFIG) --prefix=/usr --openssldir=/etc/ssl --cross-compile-prefix=' ' \
 	-ffunction-sections -fdata-sections -Wl,--gc-sections \
 	shared $(OPENSSL_CIPHERS) no-async
 #	no-sha0 no-smime no-camellia no-krb5 no-rmd160 no-ripemd \
