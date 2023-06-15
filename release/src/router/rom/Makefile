@@ -54,6 +54,7 @@ all:
 
 clean:
 #	rm -f rom/etc/motd
+	rm -f certs/ca-bundle.crt
 
 certs/ca-bundle.crt:
 	certs/mk-ca-bundle.pl -fu $@
