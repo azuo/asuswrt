@@ -35,8 +35,8 @@ else ifeq ($(BUILD_NAME), RT-AC1200G)
 	install icon.rtac1200g.ico $(INSTALLDIR)/usr/sbin/icon.ico
 	install icon.large.rtac1200g.ico $(INSTALLDIR)/usr/sbin/icon.large.ico
 else ifeq ($(BUILD_NAME), RT-AC1200G+)
-	install icon.rtac1200g+.ico $(INSTALLDIR)/usr/sbin/icon.ico
-	install icon.large.rtac1200g+.ico $(INSTALLDIR)/usr/sbin/icon.large.ico
+	install -m 644 icon.rtac1200g+.ico $(INSTALLDIR)/usr/sbin/icon.ico
+	install -m 644 icon.large.rtac1200g+.ico $(INSTALLDIR)/usr/sbin/icon.large.ico
 else ifeq ($(BUILD_NAME), DSL-AC68U)
 	install icon.rtac68u.ico $(INSTALLDIR)/usr/sbin/icon.ico
 	install icon.large.rtac68u.ico $(INSTALLDIR)/usr/sbin/icon.large.ico

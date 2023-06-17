@@ -2540,9 +2540,9 @@ quagga-install:
 	install -d $(INSTALLDIR)/quagga/usr/sbin
 	install -d $(INSTALLDIR)/quagga/usr/local/etc
 	libtool --mode=install install -c quagga/zebra/zebra $(INSTALLDIR)/quagga/usr/sbin
-	install -c -m 777 quagga/zebra/zebra.conf.sample $(INSTALLDIR)/quagga/usr/local/etc/zebra.conf
+	install -c -m 644 quagga/zebra/zebra.conf.sample $(INSTALLDIR)/quagga/usr/local/etc/zebra.conf
 	libtool --mode=install install -c quagga/ripd/ripd $(INSTALLDIR)/quagga/usr/sbin
-	install -c -m 777 quagga/ripd/ripd.conf.sample $(INSTALLDIR)/quagga/usr/local/etc/ripd.conf
+	install -c -m 644 quagga/ripd/ripd.conf.sample $(INSTALLDIR)/quagga/usr/local/etc/ripd.conf
 	libtool --mode=install install -c quagga/watchquagga/watchquagga $(INSTALLDIR)/quagga/usr/sbin
 	$(STRIP) $(INSTALLDIR)/quagga/usr/sbin/zebra
 	$(STRIP) $(INSTALLDIR)/quagga/usr/sbin/ripd
