@@ -4229,3 +4229,13 @@ void led_bh_prep(int post)
 	}
 }
 #endif
+
+// the following functions in prebuild/ate-broadcom.o return strings allocated by "strdup":
+//   ATE_BRCM_FACTORY_MODE_STR
+//   ATE_BRCM_PREFIX
+//   cfe_nvram_get
+// but callers to these functions, either inside or outside, never free the returned strings...
+// the binary is modified by replacing "strdup" with the following "strnop" to avoid memory leaks
+const char *strnop(const char* s) {
+	return s;
+}
