@@ -344,6 +344,8 @@ make_new_session(
 					htons(get_nport(&lsa->u.sa)));
 			putenv(addr);
 			putenv(port);
+			free(port);
+			free(addr);
 			free(host);
 			free(lsa);
 		}
