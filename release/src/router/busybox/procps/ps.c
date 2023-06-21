@@ -554,7 +554,7 @@ int ps_main(int argc UNUSED_PARAM, char **argv UNUSED_PARAM)
 {
 	procps_status_t *p;
 	int psscan_flags = PSSCAN_PID | PSSCAN_UIDGID
-			| PSSCAN_STATE | PSSCAN_VSZ | PSSCAN_COMM;
+			| PSSCAN_STATE | PSSCAN_VSZ | PSSCAN_RSS | PSSCAN_COMM;
 	unsigned terminal_width IF_NOT_FEATURE_PS_WIDE(= 79);
 	enum {
 		OPT_Z = (1 << 0) * ENABLE_SELINUX,
@@ -594,7 +594,7 @@ int ps_main(int argc UNUSED_PARAM, char **argv UNUSED_PARAM)
 	} else
 #endif
 	{
-		puts("  PID USER       VSZ STAT COMMAND");
+		puts("  PID USER       VSZ   RSS STAT COMMAND");
 	}
 	if (opts & OPT_T) {
 		psscan_flags |= PSSCAN_TASKS;
@@ -621,8 +621,11 @@ int ps_main(int argc UNUSED_PARAM, char **argv UNUSED_PARAM)
 				char buf6[6];
 				smart_ulltoa5(p->vsz, buf6, " mgtpezy");
 				buf6[5] = '\0';
-				len = printf("%5u %-8.8s %s %s  ",
-					p->pid, user, buf6, p->state);
+				char rss6[6];
+				smart_ulltoa5(p->rss, rss6, " mgtpezy");
+				rss6[5] = '\0';
+				len = printf("%5u %-8.8s %s %s %s  ",
+					p->pid, user, buf6, rss6, p->state);
 			}
 		}
 

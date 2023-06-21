@@ -36,6 +36,7 @@
 
 typedef struct top_status_t {
 	unsigned long vsz;
+	unsigned long rss;
 #if ENABLE_FEATURE_TOP_CPU_USAGE_PERCENTAGE
 	unsigned long ticks;
 	unsigned pcpu; /* delta of ticks */
@@ -147,8 +148,8 @@ static int pid_sort(top_status_t *P, top_status_t *Q)
 static int mem_sort(top_status_t *P, top_status_t *Q)
 {
 	/* We want to avoid unsigned->signed and truncation errors */
-	if (Q->vsz < P->vsz) return -1;
-	return Q->vsz != P->vsz; /* 0 if ==, 1 if > */
+	if (Q->rss < P->rss) return -1;
+	return Q->rss != P->rss; /* 0 if ==, 1 if > */
 }
 
 
@@ -507,6 +508,7 @@ static NOINLINE void display_process_list(int lines_rem, int scr_width)
 
 	top_status_t *s;
 	char vsz_str_buf[8];
+	char rss_str_buf[8];
 	unsigned long total_memory = display_header(scr_width, &lines_rem); /* or use total_vsz? */
 	/* xxx_shift and xxx_scale variables allow us to replace
 	 * expensive divides with multiply and shift */
@@ -519,7 +521,7 @@ static NOINLINE void display_process_list(int lines_rem, int scr_width)
 
 	/* what info of the processes is shown */
 	printf(OPT_BATCH_MODE ? "%.*s" : "\033[7m%.*s\033[0m", scr_width,
-		"  PID  PPID USER     STAT   VSZ %MEM"
+		"  PID  PPID USER     STAT   VSZ   RSS %MEM"
 		IF_FEATURE_TOP_SMP_PROCESS(" CPU")
 		IF_FEATURE_TOP_CPU_USAGE_PERCENTAGE(" %CPU")
 		" COMMAND");
@@ -588,7 +590,7 @@ static NOINLINE void display_process_list(int lines_rem, int scr_width)
 	s = top;
 	while (--lines_rem >= 0) {
 		unsigned col;
-		CALC_STAT(pmem, (s->vsz*pmem_scale + pmem_half) >> pmem_shift);
+		CALC_STAT(pmem, (s->rss*pmem_scale + pmem_half) >> pmem_shift);
 #if ENABLE_FEATURE_TOP_CPU_USAGE_PERCENTAGE
 		CALC_STAT(pcpu, (s->pcpu*pcpu_scale + pcpu_half) >> pcpu_shift);
 #endif
@@ -597,14 +599,18 @@ static NOINLINE void display_process_list(int lines_rem, int scr_width)
 			sprintf(vsz_str_buf, "%6ldm", s->vsz/1024);
 		else
 			sprintf(vsz_str_buf, "%7ld", s->vsz);
+		if (s->rss >= 100000)
+			sprintf(rss_str_buf, "%5ldm", s->rss/1024);
+		else
+			sprintf(rss_str_buf, "%6ld", s->rss);
 		/* PID PPID USER STAT VSZ %MEM [%CPU] COMMAND */
 		col = snprintf(line_buf, scr_width,
-				"\n" "%5u%6u %-8.8s %s%s" FMT
+				"\n" "%5u%6u %-8.8s %s%s%s" FMT
 				IF_FEATURE_TOP_SMP_PROCESS(" %3d")
 				IF_FEATURE_TOP_CPU_USAGE_PERCENTAGE(FMT)
 				" ",
 				s->pid, s->ppid, get_cached_username(s->uid),
-				s->state, vsz_str_buf,
+				s->state, vsz_str_buf, rss_str_buf,
 				SHOW_STAT(pmem)
 				IF_FEATURE_TOP_SMP_PROCESS(, s->last_seen_on_cpu)
 				IF_FEATURE_TOP_CPU_USAGE_PERCENTAGE(, SHOW_STAT(pcpu))
@@ -821,6 +827,7 @@ enum {
 		| PSSCAN_PID
 		| PSSCAN_PPID
 		| PSSCAN_VSZ
+		| PSSCAN_RSS
 		| PSSCAN_STIME
 		| PSSCAN_UTIME
 		| PSSCAN_STATE
@@ -931,6 +938,7 @@ int top_main(int argc UNUSED_PARAM, char **argv)
 				top[n].pid = p->pid;
 				top[n].ppid = p->ppid;
 				top[n].vsz = p->vsz;
+				top[n].rss = p->rss;
 #if ENABLE_FEATURE_TOP_CPU_USAGE_PERCENTAGE
 				top[n].ticks = p->stime + p->utime;
 #endif
