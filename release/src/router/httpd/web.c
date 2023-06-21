@@ -1026,12 +1026,16 @@ ej_load_clientlist_char_to_ascii(int eid, webs_t wp, int argc, char_t **argv)
 	if (size_ncl && size_ncl <= NCL_LIMIT) {
 		str = (char *)malloc(sizeof(char)*size_ncl+1);
 		if (fread(str, 1, size_ncl, fp) != size_ncl) {
+			free(str);
+			fclose(fp);
 			csprintf("Read nmp_client_list FILE ERR\n");
 			return 0;
 		}
 	}
-	else
+	else {
+		fclose(fp);
 		return 0;
+	}
 	fclose(fp);
 	str[size_ncl] = '\0';
 
@@ -1040,6 +1044,7 @@ ej_load_clientlist_char_to_ascii(int eid, webs_t wp, int argc, char_t **argv)
 	if (ret > sizeof(tmp)) {
 		buf = (char *)malloc(ret);
 		if (buf == NULL) {
+			free(str);
 			csprintf("No memory.\n");
 			return 0;
 		}
@@ -1047,6 +1052,7 @@ ej_load_clientlist_char_to_ascii(int eid, webs_t wp, int argc, char_t **argv)
 	char_to_ascii_safe(buf, str, ret);
 	ret = websWrite(wp, "%s", buf);
 
+	free(str);
 	if (buf != tmp)
 		free(buf);
 
@@ -4720,10 +4726,15 @@ ej_dhcpLeaseMacList(int eid, webs_t wp, int argc, char_t **argv)
 				return 0;
 			}
 		}
+		else
+			buf = tmp;
 
 		char_to_ascii_safe(buf, name, name_len);
 
 		ret += websWrite(wp,"[\"%s\", \"%s\"],", hwaddr, buf);
+
+		if (buf != tmp)
+			free(buf);
 	}
 	ret += websWrite(wp, "[\"\",\"\"]]");
 	fclose(fp);
