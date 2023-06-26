@@ -223,7 +223,7 @@ int create_socket(char *device)
         sock_fd = socket(PF_PACKET, SOCK_DGRAM, 0);
 
         if(sock_fd < 0)
-                perror("create socket ERR:");
+                return -1;
 
         device_id = iface_get_id(sock_fd, device);
 
@@ -1018,8 +1018,10 @@ int main(int argc, char *argv[])
         // create UDP socket and bind to "br0" to get ARP packet//
 	arp_sockfd = create_socket(INTERFACE);
 
-        if(arp_sockfd < 0)
+        if(arp_sockfd < 0) {
                 perror("create socket ERR:");
+                return -1;
+        }
 	else {
 	        arp_timeout.tv_sec = 0;
         	arp_timeout.tv_usec = 5000;

@@ -543,6 +543,7 @@ int send_mdns_packet_ipv4 (unsigned char *src_ip, unsigned char *dest_ip)
                 }
                 else //Found iTune Server
                 {
+                        close(sockfd);
                         return 1;
                 }
         }

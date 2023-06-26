@@ -4805,7 +4805,7 @@ int init_nvram(void)
 		add_rc_support("manual_stb");
 		add_rc_support("pwrctrl");
 		add_rc_support("WIFI_LOGO");
-		add_rc_support("update");
+		add_rc_support("noupdate");
 		if (model == MODEL_RTAC1200G) {
 			add_rc_support("noitunes");
 			add_rc_support("nodm");

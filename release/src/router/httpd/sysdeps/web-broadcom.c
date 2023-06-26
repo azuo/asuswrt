@@ -3881,6 +3881,7 @@ int ej_wl_auth_list(int eid, webs_t wp, int argc, char_t **argv) {
 					ret += websWrite(wp, ", ");
 				ret += ej_wl_sta_list_5g(eid, wp, argc, argv);
 			}
+			free(auth);
 			return ret;
 		}
 #endif

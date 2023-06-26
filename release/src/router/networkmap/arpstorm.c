@@ -85,7 +85,7 @@ int create_socket(char *device)
         sock_fd = socket(PF_PACKET, SOCK_DGRAM, 0); //2008.06.27 Yau change to UDP Socket
                                                                                                                                              
         if(sock_fd < 0)
-                perror("create socket ERR:");
+                return -1;
                                                                                                                                              
         device_id = iface_get_id(sock_fd, device);
                                                                                                                                              
