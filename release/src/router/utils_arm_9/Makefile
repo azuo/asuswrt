@@ -67,6 +67,10 @@ vpath %.c $(SRCBASE)/tools/misc $(WLAN_StdSrcDirsA) $(WLAN_ComponentSrcDirs)
 ifneq ($(wildcard $(SRCBASE)/et/linux/et.c),)
 UTILS += et
 vpath %.c $(SRCBASE)/et/linux
+else ifneq ($(wildcard $(SRCBASE)/wl/exe),)
+UTILS += et
+et:
+	-cp -f $(SRCBASE)/wl/exe/prebuilt/et et
 endif
 
 ifneq ($(wildcard $(SRCBASE)/wl/exe),)
