@@ -2406,6 +2406,8 @@ void init_syspara(void)
 
 	if (nvram_get("secret_code"))
 		nvram_set("wps_device_pin", nvram_get("secret_code"));
+	else if (nvram_get("wps_device_pin"))
+		nvram_set("secret_code", nvram_get("wps_device_pin"));
 	else {
 		nvram_set("secret_code", "12345670");
 		nvram_set("wps_device_pin", "12345670");

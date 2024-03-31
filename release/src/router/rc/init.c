@@ -173,7 +173,7 @@ wps_restore_defaults(void)
 	if (strlen(macstr))
 		for (i = 0; i < strlen(macstr); i++)
 			macstr[i] = tolower(macstr[i]);
-	nvram_set("boardnum", nvram_get("serial_no") ? : macstr);
+	//nvram_set("boardnum", nvram_get("serial_no") ? : macstr);
 }
 #endif /* RTCONFIG_WPS */
 
