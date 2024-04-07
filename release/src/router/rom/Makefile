@@ -50,10 +50,10 @@ endif
 all:
 #	@echo "" >rom/etc/motd
 #	@echo "" >>rom/etc/motd
-#	@echo "ASUSWRT `cat ../shared/version`" >>rom/etc/motd
+	@echo "ASUSWRT `cat ../shared/version`" >rom/etc/motd
 
 clean:
-#	rm -f rom/etc/motd
+	rm -f rom/etc/motd
 	rm -f certs/ca-bundle.crt
 
 certs/ca-bundle.crt:

@@ -684,6 +684,7 @@ obj-$(RTCONFIG_WEBDAV) += libexif
 obj-$(RTCONFIG_IXIAEP) += ixia_endpoint$(BCMEX)
 
 # Add for ASUS Components
+obj-$(RTCONFIG_BONJOUR) += mDNSResponder
 obj-$(RTCONFIG_UPNPC) += miniupnpc
 obj-y += miniupnpd$(MUVER)
 obj-y += igmpproxy

@@ -364,8 +364,10 @@ NMP_DEBUG("check_nmp_db:\n");
         convert_mac_to_string(p_client_tab->mac_addr[client_no], new_mac);
 
 //NMP_DEBUG("search_list= %s\n", search_list);
-        if(strstr(search_list, new_mac)==NULL)
+        if(strstr(search_list, new_mac)==NULL) {
+		free(search_list);
 		return ret;
+	}
 
         nvp = nv = search_list;
 
@@ -468,6 +470,7 @@ NMP_DEBUG("-%s,%s,%s,%s,%d,%d,%d,%d-\n", db_mac, db_user_def, db_device_name, db
 				NMP_DEBUG("DATA the same!\n");
 				free(dst_list);
 				free(dst_list_tmp);
+				free(search_list);
 				return;
 			}
 			sprintf(dst_list_tmp, "%s<%s>%s", dst_list, db_mac, db_user_def);
